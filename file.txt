@@ -1,2 +1,2 @@
 Group 3 checking 
-If you pull the correct branch for Group 3 you should see this file 
+If you pull the correct branch for Group 3 you should 
