@@ -14,14 +14,14 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "package": "com.Yungle.group2"
+      "package": "com.jsm.yungletesting"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/yungle.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.Yungle.group2"
+      "package": "com.jsm.yungletesting"
     },
     "web": {
       "bundler": "metro",
