@@ -1,24 +1,87 @@
-import { SafeAreaView, View, Text, FlatList, ScrollView } from 'react-native'
-import React from 'react'
-import SearchInput from '../../components/Searchinput'
-import NotificationCard from '../../components/NotificationCard'
+import React, { useState, useEffect } from 'react';
+import { View, Text, FlatList, SafeAreaView, StatusBar } from 'react-native';
+import SearchBar from '@/components/SearchBar';
+import NotificationBox from '@/components/NotificationBox';
+import { debounce } from 'lodash';
+import EmptyState from '../../components/EmptyState'
 
-const Notification = () => {
+
+const searchFunct = (search, notifArr) => {
+  if (search !== '') {
+    return notifArr.filter(
+      (item) =>
+        item.name.includes(search) ||
+        item.description.includes(search) ||
+        item.title.includes(search)
+    );
+  } else {
+    return notifArr;
+  }
+};
+
+export default function Notification() {
+  const [search, setSearch] = useState('');
+  const [notifArr, setNotifArr] = useState([ //Note this default value will be deleted once backend is implemented
+    {
+      name: 'hang',
+      type: 'message',
+      title: 'New Message',
+      description: `hang commented: "My name is Hang"`,
+      time: '1 hour ago',
+      profileUri: 'https://www.w3schools.com/w3images/avatar2.png',
+    },
+    {
+      name: 'jacky',
+      type: 'like',
+      title: 'New Like',
+      description: `jacky just liked your post`,
+      time: '1 day ago',
+      profileUri: 'https://www.w3schools.com/w3images/avatar2.png',
+    },
+    {
+      name: 'Jim',
+      type: 'follow',
+      title: 'New Follower',
+      description: `Jim started following you`,
+      time: '2 day ago',
+      profileUri: 'https://www.w3schools.com/w3images/avatar2.png',
+    },
+  ]);
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  useEffect(() => {
+    const debounced = debounce((value) => {
+      setDebouncedSearch(value);
+    }, 500);
+
+    debounced(search);
+    return () => {
+      debounced.cancel();
+    };
+  }, [search]);
+
+  useEffect(() => {
+    // Set the StatusBar appearance
+    StatusBar.setBarStyle('dark-content'); // For dark text on the status bar
+  }, []);
+
+  const filteredNotifications = searchFunct(debouncedSearch, notifArr);
+
   return (
-    <SafeAreaView className="h-full">
-      <View className = "my-6 px-4 space-y-6">
-        <SearchInput />
-      </View>
-      {/* Replace with flatlist after backend is complete */}
-      <ScrollView>
-        <NotificationCard name="Sally" typeNotif="like" time="now"/>
-        <NotificationCard name="Hill" typeNotif="statusupdate" time="4 hours ago"/>
-        <NotificationCard name="Jack" typeNotif="reply" time="6 hours ago"/>
-        <NotificationCard name="Natalie" typeNotif="follower" time="10 hours ago"/>
-        <NotificationCard name="Isaac" typeNotif="comment" time="2 days ago" comment="nice shot!"/>
-      </ScrollView>
+    <SafeAreaView className="flex-1 items-center">
+      <SearchBar
+        placeholder="Search notifications"
+        eventHandler={(e) => setSearch(e)}
+      />
+      {filteredNotifications.length == 0 ? (
+        <EmptyState
+        title = "No Notification Found"
+      />
+      ) : (<FlatList
+        data={filteredNotifications}
+        keyExtractor={(item, index) => index.toString()}
+        renderItem={({ item }) => <NotificationBox Notification={item} />}
+        className='w-[90%] mt-10'
+      />)}
     </SafeAreaView>
-  )
+  );
 }
-
-export default Notification
