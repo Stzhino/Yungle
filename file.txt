@@ -1,2 +1,3 @@
 Group 3 Checking 
-If you pull the correct branch for Group 3 you should see this file
+If you pull the correct branch for Group 3 you should see
+3768d7b (Update file.txt)
