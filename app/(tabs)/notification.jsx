@@ -4,7 +4,9 @@ import SearchBar from '@/components/SearchBar';
 import NotificationBox from '@/components/NotificationBox';
 import { debounce } from 'lodash';
 import EmptyState from '../../components/EmptyState'
-
+import {useGlobalContext} from '../../context/GlobalProvider'
+import useAppwrite from '../../lib/useAppwrite'
+import { getNotification } from '../../lib/appwrite';
 
 const searchFunct = (search, notifArr) => {
   if (search !== '') {
@@ -20,33 +22,9 @@ const searchFunct = (search, notifArr) => {
 };
 
 export default function Notification() {
+  const { user, setUser, setIsLogged } = useGlobalContext();
+  const {data:notification,refetch} =useAppwrite(()=>getNotification());
   const [search, setSearch] = useState('');
-  const [notifArr, setNotifArr] = useState([ //Note this default value will be deleted once backend is implemented
-    {
-      name: 'hang',
-      type: 'message',
-      title: 'New Message',
-      description: `hang commented: "My name is Hang"`,
-      time: '1 hour ago',
-      profileUri: 'https://www.w3schools.com/w3images/avatar2.png',
-    },
-    {
-      name: 'jacky',
-      type: 'like',
-      title: 'New Like',
-      description: `jacky just liked your post`,
-      time: '1 day ago',
-      profileUri: 'https://www.w3schools.com/w3images/avatar2.png',
-    },
-    {
-      name: 'Jim',
-      type: 'follow',
-      title: 'New Follower',
-      description: `Jim started following you`,
-      time: '2 day ago',
-      profileUri: 'https://www.w3schools.com/w3images/avatar2.png',
-    },
-  ]);
   const [debouncedSearch, setDebouncedSearch] = useState('');
   useEffect(() => {
     const debounced = debounce((value) => {
@@ -58,13 +36,16 @@ export default function Notification() {
       debounced.cancel();
     };
   }, [search]);
-
   useEffect(() => {
-    // Set the StatusBar appearance
-    StatusBar.setBarStyle('dark-content'); // For dark text on the status bar
+    StatusBar.setBarStyle('dark-content'); 
+    const intervalId = setInterval(() => {
+      refetch()  
+    }, 1000);  
+
+    return () => clearInterval(intervalId);
   }, []);
 
-  const filteredNotifications = searchFunct(debouncedSearch, notifArr);
+  const filteredNotifications = searchFunct(debouncedSearch, notification);
 
   return (
     <SafeAreaView className="flex-1 items-center">
