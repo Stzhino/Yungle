@@ -14,16 +14,29 @@ const Suggestion = () => {
   const [realEstate, setRealEstate] = useState(false);
   const [fashion, setFashion] = useState(false);
 
-  const{data:users, refetch}=useAppwrite(getUsers);
-  const{data:DEIUsers, refetchDEI}=useAppwrite(()=>getInterest("DEI"))
-  const{data:HikingUsers, refetchHiking}=useAppwrite(()=>getInterest("Hiking"))
-  const{data:REUsers, refetchRE}=useAppwrite(()=>getInterest("Real Estate"))
-  const{data:FashionUsers, refetchFashion}=useAppwrite(()=>getInterest("Fashion"))
+  const{data:users, isLoading:isLoadingUsers, refetch:refetch}=useAppwrite(getUsers);
+  const{data:DEIUsers, isLoading:isLoadingDEI, refetch:refetchDEI}=useAppwrite(()=>getInterest("DEI"))
+  const{data:HikingUsers, isLoading:isLoadingHiking, refetch: refetchHiking}=useAppwrite(()=>getInterest("Hiking"))
+  const{data:REUsers, isLoading:isLoadingRE, refetch: refetchRE}=useAppwrite(()=>getInterest("Real Estate"))
+  const{data:FashionUsers, isLoading:isLoadingFashion, refetch: refetchFashion}=useAppwrite(()=>getInterest("Fashion"))
 
   const [info, setInfo] = useState([]);
-
   useEffect(()=>{
-    setInfo(users);
+    if(forYou){
+      setInfo(users);  
+    }
+    else if(DEI){
+      setInfo(DEIUsers);
+    }
+    else if(hiking){
+      setInfo(HikingUsers);
+    }
+    else if(fashion){
+      setInfo(fashion);
+    }
+    else if(realEstate){
+      setInfo(REUsers);
+    }
   })
 
   const [refreshing, setRefreshing] = useState(false);
