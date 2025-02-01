@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useFocusEffect } from 'expo-router';
 import { View, Text, FlatList, SafeAreaView, StatusBar } from 'react-native';
 import SearchBar from '@/components/SearchBar';
 import NotificationBox from '@/components/NotificationBox';
@@ -7,7 +8,8 @@ import EmptyState from '../../components/EmptyState'
 import {useGlobalContext} from '../../context/GlobalProvider'
 import useAppwrite from '../../lib/useAppwrite'
 import { getNotification } from '../../lib/appwrite';
-
+import { createNotification } from '../../lib/appwrite';
+import { useRefetchContext } from '../../context/RefetchProvider';
 const searchFunct = (search, notifArr) => {
   if (search !== '') {
     return notifArr.filter(
@@ -26,23 +28,28 @@ export default function Notification() {
   const {data:notification,refetch} =useAppwrite(()=>getNotification());
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const {notifRefetch,setNotifRefetch} = useRefetchContext();
+
   useEffect(() => {
     const debounced = debounce((value) => {
       setDebouncedSearch(value);
     }, 500);
-
     debounced(search);
     return () => {
       debounced.cancel();
     };
   }, [search]);
-  useEffect(() => {
-    StatusBar.setBarStyle('dark-content'); 
-    const intervalId = setInterval(() => {
-      refetch()  
-    }, 1000);  
 
-    return () => clearInterval(intervalId);
+  useFocusEffect(()=>{
+    if(notifRefetch)
+    {
+    console.log("refresh received!")
+    refetch();
+    setNotifRefetch(false);
+    }
+  })
+  useEffect(() => {
+    StatusBar.setBarStyle('dark-content');
   }, []);
 
   const filteredNotifications = searchFunct(debouncedSearch, notification);
