@@ -3,7 +3,7 @@ import React, {useState, useEffect} from 'react'
 import SearchInput from '../../components/Searchinput'
 import icons from '../../constants/icons'
 import EmptyState from '../../components/EmptyState'
-import { getUsers } from '../../lib/appwrite'
+import { getUsers, getInterest } from '../../lib/appwrite'
 import useAppwrite from '../../lib/useAppwrite'
 import ProfileCards from '../../components/ProfileCards'
 
@@ -15,18 +15,33 @@ const Suggestion = () => {
   const [fashion, setFashion] = useState(false);
 
   const{data:users, refetch}=useAppwrite(getUsers);
+  const{data:DEIUsers, refetchDEI}=useAppwrite(()=>getInterest("DEI"))
+  const{data:HikingUsers, refetchHiking}=useAppwrite(()=>getInterest("Hiking"))
+  const{data:REUsers, refetchRE}=useAppwrite(()=>getInterest("Real Estate"))
+  const{data:FashionUsers, refetchFashion}=useAppwrite(()=>getInterest("Fashion"))
+
+  const [info, setInfo] = useState([]);
+
+  useEffect(()=>{
+    setInfo(users);
+  })
 
   const [refreshing, setRefreshing] = useState(false);
   const onRefresh = async () => {
     setRefreshing(true);
     await refetch();
+    await refetchDEI();
+    await refetchFashion();
+    await refetchRE();
+    await refetchHiking();
     console.log(users);
     setRefreshing(false);
   }
+
   return (
     <SafeAreaView className="h-full">
       <FlatList 
-        data={users}
+        data={info}
         keyExtractor={(item)=>item.$id}
         renderItem={({item})=>(
           <ProfileCards profile={item}/>
@@ -42,7 +57,8 @@ const Suggestion = () => {
                   setDEI(false);
                   setHiking(false);
                   setRealEstate(false);
-                  setFashion(false)
+                  setFashion(false);
+                  setInfo(users);
               }}>
                 <View className = {`${forYou ? "bg-purple-200" : ""} p-2 rounded-xl items-center justify-center`}>
                   <Image source={icons.foryou} className="w-6 h-6 mb-2" resizeMode='contain'/>
@@ -54,7 +70,8 @@ const Suggestion = () => {
                   setDEI(true);
                   setHiking(false);
                   setRealEstate(false);
-                  setFashion(false)
+                  setFashion(false);
+                  setInfo(DEIUsers);
               }}>
                 <View className = {`${DEI ? "bg-purple-200" : ""} p-2 rounded-xl items-center justify-center`}>
                   <Image source={icons.dei} className="w-6 h-6 mb-2" resizeMode='contain'/>
@@ -66,7 +83,8 @@ const Suggestion = () => {
                   setDEI(false);
                   setHiking(true);
                   setRealEstate(false);
-                  setFashion(false)
+                  setFashion(false);
+                  setInfo(HikingUsers);
               }}>
                 <View className = {`${hiking ? "bg-purple-200" : ""} p-2 rounded-xl items-center justify-center`}>
                   <Image source={icons.hiking} className="w-6 h-6 mb-2" resizeMode='contain'/>
@@ -78,7 +96,8 @@ const Suggestion = () => {
                   setDEI(false);
                   setHiking(false);
                   setRealEstate(true);
-                  setFashion(false)
+                  setFashion(false);
+                  setInfo(REUsers);
               }}>
                 <View className = {`${realEstate ? "bg-purple-200" : ""} p-2 rounded-xl items-center justify-center`}>
                   <Image source={icons.realestate} className="w-6 h-6 mb-2" resizeMode='contain'/>
@@ -90,7 +109,8 @@ const Suggestion = () => {
                   setDEI(false);
                   setHiking(false);
                   setRealEstate(false);
-                  setFashion(true)
+                  setFashion(true);
+                  setInfo(FashionUsers);
               }}>
                 <View className = {`${fashion ? "bg-purple-200" : ""} p-2 rounded-xl items-center justify-center`}>
                   <Image source={icons.fashion} className="w-6 h-6 mb-2" resizeMode='contain'/>
@@ -104,7 +124,7 @@ const Suggestion = () => {
                   Top Picks for You
                 </Text>
                 <Text className="font-pregular text-base mt-1">
-                  {users.length} Results
+                  {info.length} Results
                 </Text>
               </View>
               <View className="flex-row gap-5">
