@@ -4,7 +4,8 @@ import { SplashScreen, Stack } from 'expo-router';
 import { useFonts } from 'expo-font';
 import "../global.css";
 import {useEffect} from 'react';
-import GlobalProvider from '../context/GlobalProvider'
+import GlobalProvider from '../context/GlobalProvider';
+import RefetchProvider from '../context/RefetchProvider';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -39,12 +40,14 @@ const RootLayout = () => {
 
   return (
     <GlobalProvider>
+      <RefetchProvider>
       <Stack>
         <Stack.Screen name = "index" options={{ headerShown: false }}/>
         <Stack.Screen name = "(auth)" options={{ headerShown: false }}/>
         <Stack.Screen name = "(tabs)" options={{ headerShown: false }}/>
         <Stack.Screen name = "search/[query]" options={{ headerShown: false }}/>
       </Stack>
+      </RefetchProvider>
     </GlobalProvider>
   )
 }
