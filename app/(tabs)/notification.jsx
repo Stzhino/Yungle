@@ -48,21 +48,23 @@ export default function Notification() {
   const filteredNotifications = searchFunct(debouncedSearch, notification);
 
   return (
-    <SafeAreaView className="flex-1 items-center">
-      <SearchBar
-        placeholder="Search notifications"
-        eventHandler={(e) => setSearch(e)}
-      />
-      {filteredNotifications.length == 0 ? (
-        <EmptyState
-        title = "No Notification Found"
-      />
-      ) : (<FlatList
-        data={filteredNotifications}
-        keyExtractor={(item, index) => index.toString()}
-        renderItem={({ item }) => <NotificationBox Notification={item} />}
-        className='w-[90%] mt-10'
-      />)}
+    <SafeAreaView className="flex-1 items-center h-full">
+      <View className="my-6 px-4 space-y-6">
+        <SearchBar
+          placeholder="Search notifications"
+          eventHandler={(e) => setSearch(e)}
+        />
+        {filteredNotifications.length == 0 ? (
+          <EmptyState
+          title = "No Notification Found"
+        />
+        ) : (<FlatList
+          data={filteredNotifications}
+          keyExtractor={(item, index) => index.toString()}
+          renderItem={({ item }) => <NotificationBox Notification={item} />}
+          className='w-[90%] mt-10'
+        />)}
+      </View>
     </SafeAreaView>
   );
 }
