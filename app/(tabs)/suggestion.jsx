@@ -7,6 +7,15 @@ import { getUsers } from '../../lib/appwrite'
 import useAppwrite from '../../lib/useAppwrite'
 import ProfileCards from '../../components/ProfileCards'
 
+const TabIcon = ({icons, color}) =>{
+  return (
+    <View clasName='w-6 h-6 mb-2'>
+
+    </View>
+  
+  )
+}
+
 const Suggestion = () => {
   const [forYou, setForYou] = useState(true);
   const [DEI, setDEI] = useState(false);
@@ -37,6 +46,8 @@ const Suggestion = () => {
               <SearchInput />
             </View>
             <View className = "flex flex-row w-full justify-between px-3">
+            {// From here  
+            }
               <TouchableOpacity onPress={() => {
                   setForYou(true);
                   setDEI(false);
@@ -98,6 +109,9 @@ const Suggestion = () => {
                 </View>
               </TouchableOpacity>
             </View>
+            {
+              // End here
+            }
             <View className="my-6 px-4 space-y-6 mt-7 flex-row items-center justify-between">
               <View>
                 <Text className="text-3xl font-bold">
