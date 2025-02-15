@@ -41,12 +41,10 @@ export default function Notification() {
   }, [search]);
 
   useFocusEffect(
-    useCallback(() => {
       if (notifRefetch) {
-        setNotifRefetch(false); // Prevent useEffect from triggering again
+        setNotifRefetch(false); 
         refetch();
       }
-    }, [notifRefetch])
   );
   
   useEffect(() => {
