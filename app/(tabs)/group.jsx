@@ -13,7 +13,7 @@ const Group = () => {
   const{data:messages, refetch}=useAppwrite(getMessages);
     const { user, setUser, setIsLogged } = useGlobalContext();
     const {notifRefetch,setNotifRefetch} =useRefetchContext();
-   /* useEffect(()=>{
+    /*useEffect(()=>{
         console.log("Creating notif");
         createNotification("Tank",user.avatar,"Message","Hello I am not Hang")
         setNotifRefetch(true);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect,useCallback} from 'react';
 import { useFocusEffect } from 'expo-router';
 import { View, Text, FlatList, SafeAreaView, StatusBar } from 'react-native';
 import SearchBar from '@/components/SearchBar';
@@ -40,14 +40,15 @@ export default function Notification() {
     };
   }, [search]);
 
-  useFocusEffect(()=>{
-    if(notifRefetch)
-    {
-    console.log("refresh received!")
-    refetch();
-    setNotifRefetch(false);
-    }
-  })
+  useFocusEffect(
+    useCallback(() => {
+      if (notifRefetch) {
+        setNotifRefetch(false); // Prevent useEffect from triggering again
+        refetch();
+      }
+    }, [notifRefetch])
+  );
+  
   useEffect(() => {
     StatusBar.setBarStyle('dark-content');
   }, []);
