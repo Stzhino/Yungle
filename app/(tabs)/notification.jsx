@@ -40,11 +40,13 @@ export default function Notification() {
     };
   }, [search]);
 
-  useFocusEffect(
+  useFocusEffect(()=>
+  {
       if (notifRefetch) {
         setNotifRefetch(false); 
         refetch();
       }
+  }
   );
   
   useEffect(() => {

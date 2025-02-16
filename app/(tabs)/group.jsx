@@ -13,11 +13,11 @@ const Group = () => {
   const{data:messages, refetch}=useAppwrite(getMessages);
     const { user, setUser, setIsLogged } = useGlobalContext();
     const {notifRefetch,setNotifRefetch} =useRefetchContext();
-    /*useEffect(()=>{
+    useEffect(()=>{
         console.log("Creating notif");
         createNotification("Tank",user.avatar,"Message","Hello I am not Hang")
         setNotifRefetch(true);
-      },[]); */
+      },[]); 
   return (
     <SafeAreaView className="h-full">
       <View className = "my-6 px-4 space-y-6">
