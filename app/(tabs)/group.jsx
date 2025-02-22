@@ -2,13 +2,14 @@ import { SafeAreaView, View, Text, FlatList, Alert } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import { DATABASES_ID,MESSAGE_ID } from '../../lib/appwrite';
 import { mess_databases } from '../../lib/appwrite';
-import { ScrollView } from 'react-native';
 import { ID, Query } from 'react-native-appwrite';
 import { TextInput , Button} from 'react-native';
 import { KeyboardAvoidingView } from 'react-native';
 import { Platform } from 'react-native';
 import { useRef } from 'react';
 import { client } from '../../lib/appwrite';
+import { TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 const Group = () => {
   const [messages, setMessages] = useState([]);
@@ -58,6 +59,13 @@ const Group = () => {
     }
   };
 
+  const handleKeyPress = (e) => {
+    if (e.nativeEvent.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
+    }
+  };
+
   const getMessages = async () => {
     try {
       const response = await mess_databases.listDocuments(DATABASES_ID, MESSAGE_ID, [Query.limit(20)]);
@@ -80,43 +88,43 @@ const Group = () => {
   };
 
   return (
-    <SafeAreaView className='flex-1 max-w-[600px] mx-auto mt-5'>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className='flex-1 relative'
-        keyboardVerticalOffset={80}
-      >
+    <SafeAreaView className='flex-1 bg-white'>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className='flex-1' keyboardVerticalOffset={80}>
         <FlatList
           ref={flatListRef}
           data={messages}
-          keyExtractor={(item, index) => item.$id || index.toString()}
+          keyExtractor={item => item.$id}
           renderItem={({ item }) => (
-            <View className='flex flex-col gap-2 m-4'>
-              <View className='flex justify-between items-center'>
-                <Text className='text-gray-500 ml-4'>{item.$createdAt}</Text>
-              </View>
-              <View>
-                <Text className='p-4 bg-[rgba(219,26,90,1)] text-[#e2e3e8] rounded-2xl w-fit max-w-full break-words'>
-                  {item.body}
-                </Text>
-              </View>
+            <View className='m-2 p-3 bg-purple-200 rounded-lg max-w-[80%] self-start'>
+              <Text className='text-gray-700 text-xs'>{new Date(item.$createdAt).toLocaleTimeString()}</Text>
+              <Text className='text-gray-900 mt-1'>{item.body}</Text>
             </View>
           )}
           contentContainerStyle={{ flexGrow: 1, paddingBottom: 80 }}
           onContentSizeChange={scrollToBottom}
         />
-
-        <View className='mb-8 bg-[rgba(27,27,39,1)] p-4 border-t border-[rgba(40,41,57,1)]'>
+        <View className='flex-row items-center bg-purple-100 p-4 border-t border-purple-300'>
           <TextInput
-            className='border border-gray-300 p-2 rounded mb-2 text-white'
-            placeholder='Say Something'
-            placeholderTextColor='#ccc'
-            maxLength={1000}
-            multiline
+            className='flex-1 bg-white text-gray-900 p-3 rounded-lg border border-purple-300'
+            placeholder='Type a message...'
+            placeholderTextColor='#777'
             value={messageBody}
             onChangeText={setMessageBody}
+            onKeyPress={(e) => {
+              if (e.nativeEvent.key === 'Enter') {
+                if (e.shiftKey) {
+                  setMessageBody(prev => prev + "\n");
+                } else {
+                  e.preventDefault();
+                  handleSubmit();
+                }
+              }
+            }}
+            multiline
           />
-          <Button title='Submit' onPress={handleSubmit} color='#8db3dd' />
+          <TouchableOpacity onPress={handleSubmit} className='ml-3 bg-purple-500 p-3 rounded-full'>
+            <Ionicons name='send' size={24} color='white' />
+          </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
