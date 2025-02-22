@@ -12,10 +12,10 @@ const filterIcon = require('../../assets/icons/filter.png');
 const searchIcon = require('../../assets/icons/search.png');
 
 const filterOptions = [
-  { id: '1', label: 'Recent' },
+  { id: '1', label: 'Most Recent' },
   { id: '2', label: 'Most Active' },
-  { id: '3', label: 'My Groups' },
-  { id: '4', label: 'Trending' }
+  { id: '3', label: 'My Favorites' },
+  { id: '4', label: 'Hidden' }
 ];
 
 const Group = () => {
@@ -76,13 +76,17 @@ const Group = () => {
         visible={filterModalVisible}
         onRequestClose={() => setFilterModalVisible(false)}
       >
-        <View className="flex-1 justify-center items-center bg-black bg-opacity-30">
+        <View className="flex-1 justify-center items-center" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}>
           <View
             style={{
-              backgroundColor: 'rgba(255, 255, 255, 0.9)',
+              backgroundColor: 'white',
               padding: 20,
               borderRadius: 15,
               width: '80%',
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.3,
+              shadowRadius: 6,
             }}
           >
             <Text
@@ -102,7 +106,7 @@ const Group = () => {
                 borderBottomWidth: 2,
                 borderBottomColor: 'black',
                 width: '100%',
-                marginBottom: 1,
+                marginBottom: 15,
               }}
             />
 
