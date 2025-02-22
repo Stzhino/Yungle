@@ -22,6 +22,7 @@ const Profile = () => {
     background,
     interest
   } = user;
+  console.log(user.$id);
   const [form, setForm] = useState({
       newName: {name},
       newAvatar: {avatar},
@@ -193,7 +194,7 @@ const Profile = () => {
             <View className="flex flex-row flex-wrap items-center my-3">
               <Text className="font-psemibold text-base mr-2">Personal:</Text>
               {interest.map((item) => (
-                <Text className="font-pregular text-base mr-2 mt-2 border-2 border-gray-300 px-4 py-1 rounded-2xl" key={item.$id}>{item.interest_name}</Text>
+                <Text className="font-pregular text-base mr-2 mt-2 border-2 border-gray-300 px-4 py-1 rounded-2xl"key={item.$id}>{item.interest_name}</Text>
               ))}
             </View>
             {editing? (<View className="flex flex-row items-center gap-2">
