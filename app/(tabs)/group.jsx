@@ -27,11 +27,6 @@ const Group = () => {
   const [selectedFilters, setSelectedFilters] = useState([]);
   const [searchText, setSearchText] = useState('');
 
-  useEffect(() => {
-    createNotification("Tank", user.avatar, "Message", "Hello I am not Hang");
-    setNotifRefetch(true);
-  }, []);
-
   const toggleFilter = (filter) => {
     setSelectedFilters((prevFilters) =>
       prevFilters.includes(filter)
