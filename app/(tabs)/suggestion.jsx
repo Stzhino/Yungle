@@ -3,7 +3,7 @@ import React, {useState, useEffect} from 'react'
 import SearchInput from '../../components/Searchinput'
 import icons from '../../constants/icons'
 import EmptyState from '../../components/EmptyState'
-import { getUsers, getInterest } from '../../lib/appwrite'
+import { getUsers, getInterest, getRecommendations } from '../../lib/appwrite'
 import useAppwrite from '../../lib/useAppwrite'
 import ProfileCards from '../../components/ProfileCards'
 
@@ -19,11 +19,12 @@ const Suggestion = () => {
   const{data:HikingUsers, isLoading:isLoadingHiking, refetch: refetchHiking}=useAppwrite(()=>getInterest("Hiking"))
   const{data:REUsers, isLoading:isLoadingRE, refetch: refetchRE}=useAppwrite(()=>getInterest("Real Estate"))
   const{data:FashionUsers, isLoading:isLoadingFashion, refetch: refetchFashion}=useAppwrite(()=>getInterest("Fashion"))
+  const{data:reccs, isLoading:isLoadingReccs, refetch: refetchReccs}=useAppwrite(()=>getRecommendations())
 
   const [info, setInfo] = useState([]);
   useEffect(()=>{
     if(forYou){
-      setInfo(users);  
+      setInfo(reccs);  
     }
     else if(DEI){
       setInfo(DEIUsers);
@@ -37,7 +38,7 @@ const Suggestion = () => {
     else if(realEstate){
       setInfo(REUsers);
     }
-  })
+  }, [forYou, DEI, hiking, fashion, realEstate, reccs, DEIUsers, HikingUsers, FashionUsers, REUsers])
 
   const [refreshing, setRefreshing] = useState(false);
   const onRefresh = async () => {
@@ -47,6 +48,7 @@ const Suggestion = () => {
     await refetchFashion();
     await refetchRE();
     await refetchHiking();
+    await refetchReccs();
     console.log(users);
     setRefreshing(false);
   }

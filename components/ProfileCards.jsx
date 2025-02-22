@@ -2,8 +2,10 @@ import { View, Text, Image } from 'react-native'
 import React, {useState} from 'react'
 import images from "../constants/images"
 import CustomButton from "./CustomButton"
+import { createConnection } from '../lib/appwrite'
 
-const ProfileCards = ({profile:{name, career, school, company, avatar, premium}}) => {
+const ProfileCards = ({profile:{accountId, $id, name, career, school, company, avatar, premium}}) => {
+    // console.log("Account ID:" + accountId)
     let imageIcon;
     if(school=="Binghamton University, NY"){
         imageIcon=images.bing;
@@ -13,6 +15,14 @@ const ProfileCards = ({profile:{name, career, school, company, avatar, premium}}
     }
     else{
         imageIcon=images.bing;
+    }
+    const addFriend = async(user,accepted, accId) => {
+        try{
+            await createConnection(user, accepted, accId);
+        }
+        catch(error){
+            Alert.alert('Error', error.message);
+        }
     }
     return (
     <View className="flex-col p-3 px-4 bg-gray-100 mb-4 ml-4 mr-4 rounded-lg shadow-sm">
@@ -36,7 +46,7 @@ const ProfileCards = ({profile:{name, career, school, company, avatar, premium}}
                         <Image className="w-5 h-5 rounded-3xl mr-2" resizeMode='contain' source = {imageIcon}
                         />
                         <Text className="text-base text-gray-500">
-                            {school}
+                            {school || "Binghamton University"}
                         </Text>
                     </View>
                 </View>
@@ -50,8 +60,8 @@ const ProfileCards = ({profile:{name, career, school, company, avatar, premium}}
             10 Mutual Connections
         </Text>
         <View className="flex flex-row w-full gap-2">
-            <CustomButton title="Decline" containerStyles="w-1/2 mt-5 min-h-[40px] bg-gray-200" textStyles="text-black" />
-            <CustomButton title="Accept" containerStyles="w-1/2 mt-5 min-h-[40px] bg-primary" textStyles="text-white"/>
+            <CustomButton title="Decline" handlePress={()=>addFriend($id, false, accountId)} containerStyles="w-1/2 mt-5 min-h-[40px] bg-gray-200" textStyles="text-black" />
+            <CustomButton title="Accept" handlePress={()=>addFriend($id, true, accountId)}containerStyles="w-1/2 mt-5 min-h-[40px] bg-primary" textStyles="text-white"/>
         </View>
     </View>
   )
