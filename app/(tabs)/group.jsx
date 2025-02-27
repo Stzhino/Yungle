@@ -1,134 +1,121 @@
-import { SafeAreaView, View, Text, FlatList, Alert } from 'react-native';
-import React, { useState, useEffect } from 'react';
-import { DATABASES_ID,MESSAGE_ID } from '../../lib/appwrite';
-import { mess_databases } from '../../lib/appwrite';
-import { ID, Query } from 'react-native-appwrite';
-import { TextInput , Button} from 'react-native';
-import { KeyboardAvoidingView } from 'react-native';
-import { Platform } from 'react-native';
-import { useRef } from 'react';
-import { client } from '../../lib/appwrite';
-import { TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-
-const Group = () => {
-  const [messages, setMessages] = useState([]);
-  const [messageBody, setMessageBody] =useState('');
-  const flatListRef = useRef();
-
-  useEffect(() => {
-    getMessages();
-
-    const unsubscribe = client.subscribe(`databases.${DATABASES_ID}.collections.${MESSAGE_ID}.documents`, response => {
-      if (response.events.includes("databases.*.collections.*.documents.*.create")) {
-        console.log("A message was created");
-
-        setMessages(prevState => {
-          const exists = prevState.some(msg => msg.$id === response.payload.$id);
-          return exists ? prevState : [...prevState, response.payload];
-        });
-
-        scrollToBottom();
-      }
-
-      if (response.events.includes("databases.*.collections.*.documents.*.delete")) {
-        console.log("A message was deleted");
-        setMessages(prevState => prevState.filter(message => message.$id !== response.payload.$id));
-      }
-    });
-
-    return () => {
-      unsubscribe();
-    };
-  }, []);
-
-  const handleSubmit = async () => {
-    if (!messageBody.trim()) return;
-
-    try {
-      await mess_databases.createDocument(
-        DATABASES_ID,
-        MESSAGE_ID,
-        ID.unique(),
-        { body: messageBody }
-      );
-
-      setMessageBody('');
-    } catch (error) {
-      Alert.alert('Error', 'Failed to send message');
-    }
-  };
-
-  const handleKeyPress = (e) => {
-    if (e.nativeEvent.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit();
-    }
-  };
-
-  const getMessages = async () => {
-    try {
-      const response = await mess_databases.listDocuments(DATABASES_ID, MESSAGE_ID, [Query.limit(20)]);
-
-      setMessages(prevState => {
-        const newMessages = response.documents.filter(doc => !prevState.some(msg => msg.$id === doc.$id));
-        return [...prevState, ...newMessages];
-      });
-
-      scrollToBottom();
-    } catch (error) {
-      Alert.alert('Error', 'Failed to fetch messages');
-    }
-  };
-
-  const scrollToBottom = () => {
-    setTimeout(() => {
-      flatListRef.current?.scrollToEnd({ animated: true });
-    }, 100);
-  };
-
-  return (
-    <SafeAreaView className='flex-1 bg-white'>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className='flex-1' keyboardVerticalOffset={80}>
-        <FlatList
-          ref={flatListRef}
-          data={messages}
-          keyExtractor={item => item.$id}
-          renderItem={({ item }) => (
-            <View className='m-2 p-3 bg-purple-200 rounded-lg max-w-[80%] self-start'>
-              <Text className='text-gray-700 text-xs'>{new Date(item.$createdAt).toLocaleTimeString()}</Text>
-              <Text className='text-gray-900 mt-1'>{item.body}</Text>
-            </View>
-          )}
-          contentContainerStyle={{ flexGrow: 1, paddingBottom: 80 }}
-          onContentSizeChange={scrollToBottom}
-        />
-        <View className='flex-row items-center bg-purple-100 p-4 border-t border-purple-300'>
-          <TextInput
-            className='flex-1 bg-white text-gray-900 p-3 rounded-lg border border-purple-300'
-            placeholder='Type a message...'
-            placeholderTextColor='#777'
-            value={messageBody}
-            onChangeText={setMessageBody}
-            onKeyPress={(e) => {
-              if (e.nativeEvent.key === 'Enter') {
-                if (e.shiftKey) {
-                  setMessageBody(prev => prev + "\n");
-                } else {
-                  e.preventDefault();
-                  handleSubmit();
-                }
-              }
-            }}
-            multiline
-          />
-          <TouchableOpacity onPress={handleSubmit} className='ml-3 bg-purple-500 p-3 rounded-full'>
-            <Ionicons name='send' size={24} color='white' />
-          </TouchableOpacity>
+import { View, Text, TouchableOpacity } from 'react-native'
+import React from 'react'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import SearchInput from '../../components/Searchinput'
+import { FlatList } from 'react-native'
+import { images } from '../../constants'
+import {icons} from '../../constants'
+import {Image } from 'react-native'
+import { Alert } from 'react-native'
+const haveMessage =(message)=>{
+  return message ? message : 'No messages'
+}
+const Messenger =({title, profile_pic,lastSeen,previewMessage})=>(
+  <TouchableOpacity
+    onPress ={()=>{
+      console.log("You are clicking sth");
+      
+    }}
+  >
+    <View className='bg-white w-full max-h-[30vh] flex-auto  border-blue-50 border-b-[1px]'>
+    <View className ='flex-row ml-3 mt-3'>  
+      <View className ='w-[60px] h-[60px] my-2 rounded-full bg-white items-center justify-center align-middle'>
+      <Image
+        source={profile_pic}
+        className='w-[58px] h-[58px] rounded-full'
+      />
+      </View>
+      <View className='my-2 mx-2 flex-row '>
+        <Text className='font-semibold'>{title}</Text>
+        <View className=' ml-[60vw] absolute text-wrap items-end justify-end'>
+        <Text className='font-thin '>{lastSeen}</Text>
+        
         </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
-  );
-};
+        
+      </View>
+      <View className='absolute ml-[70px] mt-[40px] flex-row flex-wrap'>
+          <Text className=' text-black'>{haveMessage(previewMessage)}</Text>
+        </View>
+    </View>
+   
+    </View>
+    </TouchableOpacity>
+)
 
-export default Group;
+const group = () => {
+  const DATA=[ 
+    { id: '1', title: 'Harry Do', 
+    profile_pic:images.harry_do, 
+    lastSeen:'now', 
+    previewMessage:'You: Hey everyone I am excited to be a part of...'
+  },
+   
+  { id: '4', title: 'Brandon Tang',
+    profile_pic:images.brandon_tang,
+    lastSeen:'15 mins',
+    previewMessage:`Brandon: When r u gonna visit NYC?`
+  },
+  {id:'5', title:'Leo Fukakou', 
+    profile_pic:images.leo,
+    lastSeen:'Yesterday',
+    job:'Data Analytic'
+    ,previewMessage:`Leo: When r u gonna be back ?`
+  },
+    
+  
+  
+  {id:'3', title:'Hiten Malhotra', 
+    profile_pic:images.hiten,
+    lastSeen:'10/12/24',
+    job:'AI Engineer',
+    previewMessage:`Hiten: How you doing ?`
+  
+},
+
+    { id: '6', title: 'Opportunity Hub', 
+      profile_pic:images.bu_logo, 
+      job:'Course Assistant',
+      lastSeen:'now',
+      previewMessage:`Welcome to Opportunity Hub ?`
+    },
+    { id: '7', title: 'Career Catalyst', 
+      profile_pic:images.usf_logo, 
+      lastSeen:'now',
+      job:'Course Assistant',
+       previewMessage:`Welcome to Career Catalyst everyone..`
+    },
+    { id: '8', title: 'Yungle', 
+      profile_pic:images.logo, 
+      lastSeen:'Yesterday',
+      job:'Course Assistant',
+       previewMessage:`Yungle: Congratulations on your acceptance...`
+    }
+    ,{ id: '9', title: 'BKU Admission', 
+      profile_pic:images.bku_logo, 
+      lastSeen:'20 mins',
+      job:'Course Assistant',
+       previewMessage:`BKU: Your hard work has paid off! Congratulat...`
+    },
+    
+  ]
+  return (   
+    <FlatList
+    data={DATA}
+    renderItem={({item})=><Messenger
+    title={item.title}
+    profile_pic={item.profile_pic}
+    lastSeen={item.lastSeen}
+    previewMessage={item.previewMessage}
+    keyExtractor={(item)=>item.id}
+    />}
+    className='h-[full]  bg-white my-2'
+    ListHeaderComponent={()=>(
+      <View className ='h-[5vh] mt-[50px] mb-[20px]'>
+      <SearchInput/>   
+      </View>
+    )}
+    />
+  )
+}
+
+export default group
