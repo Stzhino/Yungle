@@ -7,14 +7,15 @@ import { images } from '../../constants'
 import {icons} from '../../constants'
 import {Image } from 'react-native'
 import { Alert } from 'react-native'
+import { router } from 'expo-router'
 const haveMessage =(message)=>{
   return message ? message : 'No messages'
 }
 const Messenger =({title, profile_pic,lastSeen,previewMessage})=>(
   <TouchableOpacity
     onPress ={()=>{
+      router.push('/pages/Room')
       console.log("You are clicking sth");
-      
     }}
   >
     <View className='bg-white w-full max-h-[30vh] flex-auto  border-blue-50 border-b-[1px]'>
