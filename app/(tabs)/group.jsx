@@ -1,9 +1,9 @@
 import { SafeAreaView, View, Text, FlatList, TouchableOpacity, Modal, Image, TextInput } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import SearchInput from '../../components/Searchinput';
-import { getMessages } from '../../lib/appwrite';
+import { getChatSession, getMessages } from '../../lib/appwrite';
 import useAppwrite from '../../lib/useAppwrite';
-import MessageCards from '../../components/MessageCards';
+import ChatSession from '@/components/ChatSession';
 import { useGlobalContext } from '../../context/GlobalProvider';
 import { createNotification } from '../../lib/appwrite';
 import { useRefetchContext } from '../../context/RefetchProvider';
@@ -19,7 +19,7 @@ const filterOptions = [
 ];
 
 const Group = () => {
-  const { data: messages, refetch } = useAppwrite(getMessages);
+  const { data: chatSession, refetch } = useAppwrite(getChatSession);
   const { user, setUser, setIsLogged } = useGlobalContext();
   const { notifRefetch, setNotifRefetch } = useRefetchContext();
 
@@ -145,10 +145,10 @@ const Group = () => {
       </Modal>
 
       <FlatList
-        data={messages}
+        data={chatSession}
         keyExtractor={(item) => item.$id}
-        renderItem={({ item }) => (
-          <MessageCards profile={item.sender} message={item.Message} time={item.time} />
+        renderItem={({ item }) =>  (
+          <ChatSession session={item} />
         )}
       />
     </SafeAreaView>
