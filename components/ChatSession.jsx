@@ -6,6 +6,7 @@ const ChatSession = ({session})=>{
     const { user, setUser, setIsLogged } = useGlobalContext();
     let recipientProfile = user.username=PersonA ? PersonBProfile : PersonAProfile;
     const router = useRouter();
+    console.log(`SessionID:${session.$id}`)
     const currentDate = new Date()
     let label="seconds";
     const convertedDate=new Date(messageDate)
