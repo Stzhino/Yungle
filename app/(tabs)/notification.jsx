@@ -9,7 +9,6 @@ import {useGlobalContext} from '../../context/GlobalProvider'
 import useAppwrite from '../../lib/useAppwrite'
 import { getNotification } from '../../lib/appwrite';
 import { createNotification } from '../../lib/appwrite';
-import { useRefetchContext } from '../../context/RefetchProvider';
 const searchFunct = (search, notifArr) => {
   if (search !== '') {
     return notifArr.filter(
@@ -28,8 +27,6 @@ export default function Notification() {
   const {data:notification,refetch} =useAppwrite(()=>getNotification());
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const {notifRefetch,setNotifRefetch} = useRefetchContext();
-
   useEffect(() => {
     const debounced = debounce((value) => {
       setDebouncedSearch(value);
@@ -40,14 +37,10 @@ export default function Notification() {
     };
   }, [search]);
 
-  useFocusEffect(()=>
+  useFocusEffect(useCallback(()=>
   {
-      if (notifRefetch) {
-        setNotifRefetch(false); 
-        refetch();
-      }
-  }
-  );
+      refetch()
+  },[]));
   
   useEffect(() => {
     StatusBar.setBarStyle('dark-content');

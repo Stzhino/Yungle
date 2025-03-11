@@ -6,8 +6,6 @@ import useAppwrite from '../../lib/useAppwrite';
 import ChatSession from '@/components/ChatSession';
 import { useGlobalContext } from '../../context/GlobalProvider';
 import { createNotification } from '../../lib/appwrite';
-import { useRefetchContext } from '../../context/RefetchProvider';
-
 const filterIcon = require('../../assets/icons/filter.png');
 const searchIcon = require('../../assets/icons/search.png');
 
@@ -21,8 +19,6 @@ const filterOptions = [
 const Group = () => {
   const { data: chatSession, refetch } = useAppwrite(getChatSession);
   const { user, setUser, setIsLogged } = useGlobalContext();
-  const { notifRefetch, setNotifRefetch } = useRefetchContext();
-
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState([]);
   const [searchText, setSearchText] = useState('');
