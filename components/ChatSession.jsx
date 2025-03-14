@@ -10,19 +10,18 @@ const ChatSession = ({session})=>{
     const currentDate = new Date()
     let label="seconds";
     const convertedDate=new Date(messageDate)
-    let timeDifference =
-     (currentDate-convertedDate);
-    if((timeDifference/86400000)>1)
+    let timeDifference =(currentDate-convertedDate);
+    if((timeDifference/86400000)>=1)
     {
         label="days ago"
         timeDifference=timeDifference/86400000
     }
-    else if((timeDifference/3600000)>1)
+    else if((timeDifference/3600000)>=1)
     {
         label="hours ago"
         timeDifference=timeDifference/3600000
     }
-    else if(timeDifference/60000>1)
+    else if(timeDifference/60000>=1)
     {
         label="minutes ago"
         timeDifference=timeDifference/60000
@@ -32,8 +31,7 @@ const ChatSession = ({session})=>{
         label="seconds ago"
         timeDifference=timeDifference/1000
     }
-    timeDifference=
-    Math.floor(timeDifference);
+    timeDifference=Math.floor(timeDifference);
      return(
         <View className="flex-row border-t-[1px] border-[#F2F2F2] self-center p-2">
             <View className="w-[60px] h-[60px] rounded-full ml-[10px] overflow-hidden">
