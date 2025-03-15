@@ -8,6 +8,7 @@ import { createUser } from '../../lib/appwrite'
 import { useGlobalContext } from '../../context/GlobalProvider'
 import { useRouter } from 'expo-router'
 import { useSignUpContext } from '../../context/SignUpProvider'
+import KeyboardMover from '../../components/KeyboardMover';
 
 const SignUp = () => {
   const router = useRouter();
@@ -43,54 +44,56 @@ const SignUp = () => {
     }
   }
   return (
-    <SafeAreaView className="bg-black h-full">
-      <ScrollView>
-        <View className="w-full flex justify-center min-h-[85vh] px-4 my-6">
-          <View className="items-center justify-center">
-            <Image
-              source={images.logo}
-              resizeMode='contain'
-              className="w-[115px] h-[115px]"
+    <KeyboardMover>
+      <SafeAreaView className="bg-black h-full">
+        <ScrollView>
+          <View className="w-full flex justify-center min-h-[85vh] px-4 my-6">
+            <View className="items-center justify-center">
+              <Image
+                source={images.logo}
+                resizeMode='contain'
+                className="w-[115px] h-[115px]"
+              />
+              <Text className="text-2xl text-white text-semibold mt-7 font-psemibold">
+                Sign Up to Yungle
+              </Text>
+            </View>
+            <FormField
+              title="Username"
+              value={localForm.username}
+              handleChangeText={(e) => setLocalForm({ ...localForm, username: e })}
+              otherStyles="mt-10"
             />
-            <Text className="text-2xl text-white text-semibold mt-7 font-psemibold">
-              Sign Up to Yungle
-            </Text>
+            <FormField
+              title="Email"
+              value={localForm.email}
+              handleChangeText={(e) => setLocalForm({ ...localForm, email: e })}
+              otherStyles="mt-7"
+              keyboardType="email-address"
+            />
+            <FormField
+              title="Password"
+              value={localForm.password}
+              handleChangeText={(e) => setLocalForm({ ...localForm, password: e })}
+              otherStyles="mt-7"
+            />
+            <CustomButton
+              title="Continue"
+              handlePress={submit}
+              containerStyles="mt-7 min-h-[62px] bg-primary"
+              textStyles="text-white"
+              isLoading={isSubmitting}
+            />
+            <View className="justify-center pt-5 flex-row gap-2">
+              <Text className="text-lg text-gray-400 font-pregular">
+                Have an account already?
+              </Text>
+              <Link href="/sign-in" className="text-lg font-psemibold text-primary">Sign In</Link>
+            </View>
           </View>
-          <FormField
-            title="Username"
-            value={localForm.username}
-            handleChangeText={(e) => setLocalForm({ ...localForm, username: e })}
-            otherStyles="mt-10"
-          />
-          <FormField
-            title="Email"
-            value={localForm.email}
-            handleChangeText={(e) => setLocalForm({ ...localForm, email: e })}
-            otherStyles="mt-7"
-            keyboardType="email-address"
-          />
-          <FormField
-            title="Password"
-            value={localForm.password}
-            handleChangeText={(e) => setLocalForm({ ...localForm, password: e })}
-            otherStyles="mt-7"
-          />
-          <CustomButton
-            title="Continue"
-            handlePress={submit}
-            containerStyles="mt-7 min-h-[62px] bg-primary"
-            textStyles="text-white"
-            isLoading={isSubmitting}
-          />
-          <View className="justify-center pt-5 flex-row gap-2">
-            <Text className="text-lg text-gray-400 font-pregular">
-              Have an account already?
-            </Text>
-            <Link href="/sign-in" className="text-lg font-psemibold text-primary">Sign In</Link>
-          </View>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+        </ScrollView>
+      </SafeAreaView>
+    </KeyboardMover>
   )
 }
 

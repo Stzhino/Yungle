@@ -7,6 +7,7 @@ import { useSignUpContext } from '../../context/SignUpProvider';
 import { createUser } from "../../lib/appwrite";
 import { useGlobalContext } from "../../context/GlobalProvider";
 import { useNavigation } from "@react-navigation/native";
+import KeyboardMover from '../../components/KeyboardMover';
 
 const SignupStep3 = () => {
     const navigation = useNavigation();
@@ -40,56 +41,58 @@ const SignupStep3 = () => {
     };
 
     return (
-        <SafeAreaView className="bg-black h-full">
-            <ScrollView>
-                <View className="w-full flex justify-center items-center min-h-[85vh] px-6 my-6">
+        <KeyboardMover>
+            <SafeAreaView className="bg-black h-full">
+                <ScrollView>
+                    <View className="w-full flex justify-center items-center min-h-[85vh] px-6 my-6">
 
-                    <Image
-                        source={images.logo}
-                        resizeMode="contain"
-                        className="w-[120px] h-[120px]"
-                    />
+                        <Image
+                            source={images.logo}
+                            resizeMode="contain"
+                            className="w-[120px] h-[120px]"
+                        />
 
-                    <Text className="text-3xl text-white font-bold mt-6">
-                        Finalize Your Profile
-                    </Text>
+                        <Text className="text-3xl text-white font-bold mt-6">
+                            Finalize Your Profile
+                        </Text>
 
-                    <View className="mt-8 w-full space-y-5">
-                        {[
-                            { label: "Username", value: form.username },
-                            { label: "Email", value: form.email },
-                            { label: "School", value: form.school },
-                            { label: "Major", value: form.major },
-                            { label: "Career", value: form.career },
-                            ...(Array.isArray(form.interests) && form.interests.length > 0
-                                ? [{ label: "Interests", value: form.interests.join(", ") }]
-                                : [])
-                        ].map((item, index) => (
-                            <View key={index} className="w-full">
-                                <Text className="text-base text-gray-400 tracking-wide">{item.label}</Text>
-                                <Text className="text-xl text-white font-medium">
-                                    {item.value || "N/A"}
-                                </Text>
-                                {index !== 5 && <View className="border-b border-gray-700 mt-3" />}
-                            </View>
-                        ))}
+                        <View className="mt-8 w-full space-y-5">
+                            {[
+                                { label: "Username", value: form.username },
+                                { label: "Email", value: form.email },
+                                { label: "School", value: form.school },
+                                { label: "Major", value: form.major },
+                                { label: "Career", value: form.career },
+                                ...(Array.isArray(form.interests) && form.interests.length > 0
+                                    ? [{ label: "Interests", value: form.interests.join(", ") }]
+                                    : [])
+                            ].map((item, index) => (
+                                <View key={index} className="w-full">
+                                    <Text className="text-base text-gray-400 tracking-wide">{item.label}</Text>
+                                    <Text className="text-xl text-white font-medium">
+                                        {item.value || "N/A"}
+                                    </Text>
+                                    {index !== 5 && <View className="border-b border-gray-700 mt-3" />}
+                                </View>
+                            ))}
+                        </View>
+
+
+                        <CustomButton
+                            title="Finish"
+                            handlePress={handleSubmit}
+                            containerStyles="mt-10 min-h-[56px] bg-primary w-3/4 rounded-lg shadow-lg"
+                            textStyles="text-white text-lg font-semibold"
+                            isLoading={isSubmitting}
+                        />
+
+                        <TouchableOpacity onPress={() => router.back()} className="mt-5">
+                            <Text className="text-lg text-gray-400 text-center">Previous</Text>
+                        </TouchableOpacity>
                     </View>
-
-
-                    <CustomButton
-                        title="Finish"
-                        handlePress={handleSubmit}
-                        containerStyles="mt-10 min-h-[56px] bg-primary w-3/4 rounded-lg shadow-lg"
-                        textStyles="text-white text-lg font-semibold"
-                        isLoading={isSubmitting}
-                    />
-
-                    <TouchableOpacity onPress={() => router.back()} className="mt-5">
-                        <Text className="text-lg text-gray-400 text-center">Previous</Text>
-                    </TouchableOpacity>
-                </View>
-            </ScrollView>
-        </SafeAreaView>
+                </ScrollView>
+            </SafeAreaView>
+        </KeyboardMover>
     );
 };
 
