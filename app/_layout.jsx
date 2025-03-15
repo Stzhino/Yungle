@@ -46,6 +46,12 @@ const RootLayout = () => {
             <Stack.Screen name="(auth)" options={{ headerShown: false }} />
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="search/[query]" options={{ headerShown: false }} />
+            <Stack.Screen name = "Menu/accountcenter" options={{headerShown: false}}/>
+            <Stack.Screen name = "Menu/appearance" options={{headerShown: false}}/>
+            <Stack.Screen name = "Menu/blockedusers" options={{headerShown: false}}/>
+            <Stack.Screen name = "Menu/notifications" options={{headerShown: false}}/>
+            <Stack.Screen name = "Menu/preferences" options={{headerShown: false}}/>
+            <Stack.Screen name = "Menu/universityhub" options={{headerShown: false}}/>
           </Stack>
       </GlobalProvider>
     </SignUpProvider>
