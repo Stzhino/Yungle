@@ -22,7 +22,6 @@ const Group = () => {
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState([]);
   const [searchText, setSearchText] = useState('');
-
   const toggleFilter = (filter) => {
     setSelectedFilters((prevFilters) =>
       prevFilters.includes(filter)
