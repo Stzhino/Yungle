@@ -2,34 +2,10 @@ import { View, Text, Image, TouchableOpacity } from 'react-native';
 import icons from '../constants/icons';
 import React, {useState, useEffect} from 'react';
 import { updateConnection, updateNotif } from '../lib/appwrite';
-
+import { calculateTimeDifference } from '../lib/calculation';
 export default function NotificationBox({ Notification }) {
   const { title, name,senderAvatar,description, time } = Notification;
-  const currentDate = new Date()
-    let label="seconds";
-    const convertedDate=new Date(time)
-    let timeDifference =(currentDate-convertedDate);
-    if((timeDifference/86400000)>=1)
-    {
-        label="days ago"
-        timeDifference=timeDifference/86400000
-    }
-    else if((timeDifference/3600000)>=1)
-    {
-        label="hours ago"
-        timeDifference=timeDifference/3600000
-    }
-    else if(timeDifference/60000>=1)
-    {
-        label="minutes ago"
-        timeDifference=timeDifference/60000
-    }
-    else
-    {
-        label="seconds ago"
-        timeDifference=timeDifference/1000
-    }
-    timeDifference=Math.floor(timeDifference);
+  const timeDifference = calculateTimeDifference(time);
   const [Loading, setLoading] = useState(true)
   const requestUpdate = async(sender, wasAccepted) => {
     try{
@@ -77,7 +53,7 @@ export default function NotificationBox({ Notification }) {
           <View className="mt-[2px]">
             <Text className="text-[12px] font-pregular">{description}</Text>
           </View>
-          <Text className="text-[10px] font-pregular text-gray-500 mt-[8px]">{timeDifference} {label}</Text>
+          <Text className="text-[10px] font-pregular text-gray-500 mt-[8px]">{timeDifference}</Text>
         </View>
       </View>
     }
