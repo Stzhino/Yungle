@@ -17,6 +17,8 @@ import rect from "../assets/icons/rounded-rectangle.png"
 import heart from "../assets/icons/like.png"
 import education from "../assets/icons/graduation.png"
 import photo from "../assets/icons/photo.png"
+import check from "../assets/icons/check.png"
+import close from "../assets/icons/close.png"
 
 export default {
   communication,
@@ -37,5 +39,7 @@ export default {
   rect,
   heart,
   education,
-  photo
+  photo,
+  check,
+  close,
 };

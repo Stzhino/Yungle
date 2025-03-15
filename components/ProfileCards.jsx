@@ -2,7 +2,7 @@ import { View, Text, Image } from 'react-native'
 import React, {useState} from 'react'
 import images from "../constants/images"
 import CustomButton from "./CustomButton"
-import { createConnection } from '../lib/appwrite'
+import { createConnection, createNotification } from '../lib/appwrite'
 
 const ProfileCards = ({profile:{accountId, $id, name, career, school, company, avatar, premium}}) => {
     // console.log("Account ID:" + accountId)
@@ -19,6 +19,8 @@ const ProfileCards = ({profile:{accountId, $id, name, career, school, company, a
     const addFriend = async(user,accepted, accId) => {
         try{
             await createConnection(user, accepted, accId);
+            console.log("attempting to add friend")
+            await createNotification(user, "Friend Request");
         }
         catch(error){
             Alert.alert('Error', error.message);

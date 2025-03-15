@@ -63,7 +63,7 @@ export default function Notification() {
           data={filteredNotifications}
           keyExtractor={(item, index) => index.toString()}
           renderItem={({ item }) => <NotificationBox Notification={item} />}
-          className='w-[90%] mt-10'
+          className='w-full mt-10'
         />)}
       </View>
     </SafeAreaView>
