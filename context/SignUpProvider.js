@@ -10,7 +10,6 @@ const SignUpProvider = ({ children }) => {
         school: "",
         major: "",
         career: "",
-        interests: "",
     });
 
     return (

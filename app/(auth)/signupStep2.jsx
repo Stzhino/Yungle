@@ -1,13 +1,18 @@
 import { View, Text, SafeAreaView, ScrollView, Image, Alert } from 'react-native';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import images from '../../constants/images';
 import FormField from '../../components/FormField';
 import CustomButton from '../../components/CustomButton';
 import { useRouter } from 'expo-router';
 import { useSignUpContext } from '../../context/SignUpProvider';
 import { TouchableOpacity } from 'react-native';
+import { useNavigation } from "@react-navigation/native";
 
 const SignupStep2 = () => {
+    const navigation = useNavigation();
+    useEffect(() => {
+        navigation.setOptions({ headerShown: false });
+    }, [navigation]);
     const router = useRouter();
     const { form, setForm } = useSignUpContext();
     const [localForm, setLocalForm] = useState({
