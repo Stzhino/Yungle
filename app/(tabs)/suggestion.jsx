@@ -59,7 +59,7 @@ const Suggestion = () => {
         data={info}
         keyExtractor={(item)=>item.$id}
         renderItem={({item})=>(
-          <ProfileCards profile={item}/>
+          <ProfileCards profile={item} />
         )}
         ListHeaderComponent={()=>(
           <View>
