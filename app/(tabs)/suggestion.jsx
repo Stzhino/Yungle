@@ -1,5 +1,5 @@
 import { SafeAreaView, View, Text, FlatList, TouchableOpacity, Image, RefreshControl, Alert } from 'react-native'
-import React, {useState, useEffect} from 'react'
+import React, { useState, useEffect } from 'react'
 import SearchInput from '../../components/Searchinput'
 import icons from '../../constants/icons'
 import EmptyState from '../../components/EmptyState'
@@ -14,28 +14,28 @@ const Suggestion = () => {
   const [realEstate, setRealEstate] = useState(false);
   const [fashion, setFashion] = useState(false);
 
-  const{data:users, isLoading:isLoadingUsers, refetch:refetch}=useAppwrite(getUsers);
-  const{data:DEIUsers, isLoading:isLoadingDEI, refetch:refetchDEI}=useAppwrite(()=>getInterest("DEI"))
-  const{data:HikingUsers, isLoading:isLoadingHiking, refetch: refetchHiking}=useAppwrite(()=>getInterest("Hiking"))
-  const{data:REUsers, isLoading:isLoadingRE, refetch: refetchRE}=useAppwrite(()=>getInterest("Real Estate"))
-  const{data:FashionUsers, isLoading:isLoadingFashion, refetch: refetchFashion}=useAppwrite(()=>getInterest("Fashion"))
-  const{data:reccs, isLoading:isLoadingReccs, refetch: refetchReccs}=useAppwrite(()=>getRecommendations())
+  const { data: users, isLoading: isLoadingUsers, refetch: refetch } = useAppwrite(getUsers);
+  const { data: DEIUsers, isLoading: isLoadingDEI, refetch: refetchDEI } = useAppwrite(() => getInterest("DEI"))
+  const { data: HikingUsers, isLoading: isLoadingHiking, refetch: refetchHiking } = useAppwrite(() => getInterest("Hiking"))
+  const { data: REUsers, isLoading: isLoadingRE, refetch: refetchRE } = useAppwrite(() => getInterest("Real Estate"))
+  const { data: FashionUsers, isLoading: isLoadingFashion, refetch: refetchFashion } = useAppwrite(() => getInterest("Fashion"))
+  const { data: reccs, isLoading: isLoadingReccs, refetch: refetchReccs } = useAppwrite(() => getRecommendations())
 
   const [info, setInfo] = useState([]);
-  useEffect(()=>{
-    if(forYou){
-      setInfo(reccs);  
+  useEffect(() => {
+    if (forYou) {
+      setInfo(reccs);
     }
-    else if(DEI){
+    else if (DEI) {
       setInfo(DEIUsers);
     }
-    else if(hiking){
+    else if (hiking) {
       setInfo(HikingUsers);
     }
-    else if(fashion){
+    else if (fashion) {
       setInfo(fashion);
     }
-    else if(realEstate){
+    else if (realEstate) {
       setInfo(REUsers);
     }
   }, [forYou, DEI, hiking, fashion, realEstate, reccs, DEIUsers, HikingUsers, FashionUsers, REUsers])
@@ -55,80 +55,80 @@ const Suggestion = () => {
 
   return (
     <SafeAreaView className="h-full">
-      <FlatList 
+      <FlatList
         data={info}
-        keyExtractor={(item)=>item.$id}
-        renderItem={({item})=>(
+        keyExtractor={(item) => item.$id}
+        renderItem={({ item }) => (
           <ProfileCards profile={item} />
         )}
-        ListHeaderComponent={()=>(
+        ListHeaderComponent={() => (
           <View>
-            <View className = "my-6 px-4 space-y-6">
+            <View className="my-6 px-4 space-y-6">
               <SearchInput />
             </View>
-            <View className = "flex flex-row w-full justify-between px-3">
+            <View className="flex flex-row w-full justify-between px-3">
               <TouchableOpacity onPress={() => {
-                  setForYou(true);
-                  setDEI(false);
-                  setHiking(false);
-                  setRealEstate(false);
-                  setFashion(false);
-                  setInfo(users);
+                setForYou(true);
+                setDEI(false);
+                setHiking(false);
+                setRealEstate(false);
+                setFashion(false);
+                setInfo(users);
               }}>
-                <View className = {`${forYou ? "bg-purple-200" : ""} p-2 rounded-xl items-center justify-center`}>
-                  <Image source={icons.foryou} className="w-6 h-6 mb-2" resizeMode='contain'/>
+                <View className={`${forYou ? "bg-purple-200" : ""} p-2 rounded-xl items-center justify-center`}>
+                  <Image source={icons.foryou} className="w-6 h-6 mb-2" resizeMode='contain' />
                   <Text className="text-sm">For You</Text>
                 </View>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => {
-                  setForYou(false);
-                  setDEI(true);
-                  setHiking(false);
-                  setRealEstate(false);
-                  setFashion(false);
-                  setInfo(DEIUsers);
+                setForYou(false);
+                setDEI(true);
+                setHiking(false);
+                setRealEstate(false);
+                setFashion(false);
+                setInfo(DEIUsers);
               }}>
-                <View className = {`${DEI ? "bg-purple-200" : ""} p-2 rounded-xl items-center justify-center`}>
-                  <Image source={icons.dei} className="w-6 h-6 mb-2" resizeMode='contain'/>
+                <View className={`${DEI ? "bg-purple-200" : ""} p-2 rounded-xl items-center justify-center`}>
+                  <Image source={icons.dei} className="w-6 h-6 mb-2" resizeMode='contain' />
                   <Text className="text-sm">DEI</Text>
                 </View>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => {
-                  setForYou(false);
-                  setDEI(false);
-                  setHiking(true);
-                  setRealEstate(false);
-                  setFashion(false);
-                  setInfo(HikingUsers);
+                setForYou(false);
+                setDEI(false);
+                setHiking(true);
+                setRealEstate(false);
+                setFashion(false);
+                setInfo(HikingUsers);
               }}>
-                <View className = {`${hiking ? "bg-purple-200" : ""} p-2 rounded-xl items-center justify-center`}>
-                  <Image source={icons.hiking} className="w-6 h-6 mb-2" resizeMode='contain'/>
+                <View className={`${hiking ? "bg-purple-200" : ""} p-2 rounded-xl items-center justify-center`}>
+                  <Image source={icons.hiking} className="w-6 h-6 mb-2" resizeMode='contain' />
                   <Text className="text-sm">Hiking</Text>
                 </View>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => {
-                  setForYou(false);
-                  setDEI(false);
-                  setHiking(false);
-                  setRealEstate(true);
-                  setFashion(false);
-                  setInfo(REUsers);
+                setForYou(false);
+                setDEI(false);
+                setHiking(false);
+                setRealEstate(true);
+                setFashion(false);
+                setInfo(REUsers);
               }}>
-                <View className = {`${realEstate ? "bg-purple-200" : ""} p-2 rounded-xl items-center justify-center`}>
-                  <Image source={icons.realestate} className="w-6 h-6 mb-2" resizeMode='contain'/>
+                <View className={`${realEstate ? "bg-purple-200" : ""} p-2 rounded-xl items-center justify-center`}>
+                  <Image source={icons.realestate} className="w-6 h-6 mb-2" resizeMode='contain' />
                   <Text className="text-sm">Real Estate</Text>
                 </View>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => {
-                  setForYou(false);
-                  setDEI(false);
-                  setHiking(false);
-                  setRealEstate(false);
-                  setFashion(true);
-                  setInfo(FashionUsers);
+                setForYou(false);
+                setDEI(false);
+                setHiking(false);
+                setRealEstate(false);
+                setFashion(true);
+                setInfo(FashionUsers);
               }}>
-                <View className = {`${fashion ? "bg-purple-200" : ""} p-2 rounded-xl items-center justify-center`}>
-                  <Image source={icons.fashion} className="w-6 h-6 mb-2" resizeMode='contain'/>
+                <View className={`${fashion ? "bg-purple-200" : ""} p-2 rounded-xl items-center justify-center`}>
+                  <Image source={icons.fashion} className="w-6 h-6 mb-2" resizeMode='contain' />
                   <Text className="text-sm">Fashion</Text>
                 </View>
               </TouchableOpacity>
@@ -143,32 +143,32 @@ const Suggestion = () => {
                 </Text>
               </View>
               <View className="flex-row gap-5">
-                <Image 
-                  source = {icons.list}
-                  className = "w-6 h-6"
-                  resizeMode = "contain"
+                <Image
+                  source={icons.list}
+                  className="w-6 h-6"
+                  resizeMode="contain"
                 />
-                <Image 
-                  source = {icons.rect}
-                  className = "w-6 h-6"
-                  resizeMode = "contain"
+                <Image
+                  source={icons.rect}
+                  className="w-6 h-6"
+                  resizeMode="contain"
                 />
               </View>
             </View>
           </View>
         )}
-        ListEmptyComponent={()=>(
+        ListEmptyComponent={() => (
           <EmptyState
-            title = "No Users Found"
+            title="No Users Found"
           />
         )}
-        refreshControl = {<RefreshControl
-          refreshing = {refreshing}
-          onRefresh = {onRefresh}
+        refreshControl={<RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
         />}
       />
     </SafeAreaView>
-    
+
   )
 }
 
