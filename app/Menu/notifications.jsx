@@ -4,9 +4,11 @@ import { useGlobalContext } from '../../context/GlobalProvider'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { getNotificationPreferences, updateNotificationPreferences } from '../../lib/appwrite'
 import useAppwrite from '../../lib/useAppwrite'
-
+import { Ionicons } from '@expo/vector-icons'; 
+import { useNavigation } from '@react-navigation/native';
 const NotificationPreferences = () => {
   const { user } = useGlobalContext();
+  const navigation = useNavigation();
   const { data: savedPreferences, refetch } = useAppwrite(() => getNotificationPreferences());
   const [preferences, setPreferences] = useState({
     friendRequests: true,
@@ -36,7 +38,6 @@ const NotificationPreferences = () => {
   };
 
   const setPosition = async (position) => {
-    // Validate position value
     if (position !== 'top' && position !== 'bottom') {
       Alert.alert('Error', 'Invalid position value');
       return;
@@ -57,9 +58,12 @@ const NotificationPreferences = () => {
   return (
     <SafeAreaView className="flex-1 bg-white">
       <ScrollView className="flex-1 px-4">
-        <Text className="text-2xl font-bold mb-6 mt-4">Notification Settings</Text>
-        
-        {/* Notification Position */}
+      <View className="flex-row items-center p-4 border-b border-gray-200">
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={24} color="#6D28D9" />
+        </TouchableOpacity>
+        <Text className="text-2xl font-bold ml-4">Notification Settings</Text>
+      </View>
         <View className="mb-6">
           <Text className="text-lg font-semibold mb-3">Notification Position</Text>
           <View className="flex-row space-x-4">
@@ -82,7 +86,6 @@ const NotificationPreferences = () => {
           </View>
         </View>
 
-        {/* Notification Types */}
         <View className="space-y-4">
           <Text className="text-lg font-semibold mb-3">Notification Types</Text>
           
