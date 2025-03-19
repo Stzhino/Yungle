@@ -1,4 +1,4 @@
-import { SafeAreaView, View, Text, Image, FlatList, TouchableOpacity, TextInput, FlatListComponent, ScrollView, Alert, Animated, ActivityIndicator } from 'react-native'
+import { SafeAreaView, View, Text, Image, FlatList, TouchableOpacity, TextInput, FlatListComponent, ScrollView, Alert, Animated, ActivityIndicator, Platform, Keyboard } from 'react-native'
 import React, { useEffect, useRef } from 'react'
 import * as DocumentPicker from "expo-document-picker";
 import { useGlobalContext } from '../../context/GlobalProvider'
@@ -9,6 +9,7 @@ import { updateUser, getCurrentUser, createLabel, getUserPhotos, createImagePost
 import useAppwrite from '../../lib/useAppwrite'
 import { Ionicons } from '@expo/vector-icons'
 import * as ImagePicker from 'expo-image-picker'
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 
 const Profile = () => {
   const { user, setUser, setIsLogged } = useGlobalContext();
@@ -140,7 +141,7 @@ const Profile = () => {
   const pickImage = async (type) => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: 'image',
+        mediaTypes: 'Images',
         allowsEditing: true,
         aspect: type === 'avatar' ? [1, 1] : [16, 9],
         quality: 0.8,
@@ -150,36 +151,29 @@ const Profile = () => {
         setUploading(true);
         const imageUri = result.assets[0].uri;
         
-        // Create a form data object
-        const formData = new FormData();
-        formData.append('file', {
-          uri: imageUri,
-          type: 'image/jpeg',
-          name: 'photo.jpg',
-        });
-
         try {
-          let updatedUser;
-          if (type === 'avatar') {
-            // Update avatar
-            updatedUser = await updateUser({
-              ...user,
-              avatar: imageUri, // You'll need to modify your updateUser function to handle image upload
-            });
-          } else {
-            // Update background
-            updatedUser = await updateUser({
-              ...user,
-              background: imageUri, // You'll need to modify your updateUser function to handle image upload
-            });
-          }
+          // Update user with all existing data plus the new image
+          await updateUser(
+            user.name,
+            user.location,
+            user.major,
+            user.career,
+            user.school,
+            type === 'avatar' ? imageUri : user.avatar,
+            type === 'background' ? imageUri : user.background
+          );
+          
+          // Refresh user data
+          const updatedUser = await getCurrentUser();
           setUser(updatedUser);
           Alert.alert('Success', 'Photo updated successfully!');
         } catch (error) {
+          console.error('Update error:', error);
           Alert.alert('Error', 'Failed to update photo. Please try again.');
         }
       }
     } catch (error) {
+      console.error('Image picker error:', error);
       Alert.alert('Error', 'An error occurred while picking the image.');
     } finally {
       setUploading(false);
@@ -189,7 +183,7 @@ const Profile = () => {
   const addPhoto = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: 'image',
+        mediaTypes: 'Images',
         allowsEditing: true,
         aspect: [4, 3],
         quality: 0.8,
@@ -248,7 +242,14 @@ const Profile = () => {
   );
 
   return (
-    <ScrollView className="flex-1 bg-gray-50">
+    <KeyboardAwareScrollView
+      enableOnAndroid
+      enableAutomaticScroll
+      keyboardShouldPersistTaps="handled"
+      extraScrollHeight={Platform.OS === 'ios' ? 120 : 40}
+      contentContainerStyle={{ flexGrow: 1 }}
+      className="flex-1 bg-gray-50"
+    >
       <SafeAreaView>
         {/* Background & Profile Image */}
         <View className="relative mb-20">
@@ -309,6 +310,9 @@ const Profile = () => {
                 placeholder={name}
                 placeholderTextColor="#9CA3AF"
                 onChangeText={(text) => setForm({ ...form, newName: text })}
+                returnKeyType="next"
+                autoCorrect={false}
+                autoCapitalize="none"
               />
             ) : (
               <Text className="text-2xl font-bold text-gray-800">{name}</Text>
@@ -322,6 +326,9 @@ const Profile = () => {
               placeholder={location}
               placeholderTextColor="#9CA3AF"
               onChangeText={(text) => setForm({ ...form, newLocation: text })}
+              returnKeyType="next"
+              autoCorrect={false}
+              autoCapitalize="none"
             />
           ) : (
             <Text className="text-gray-600 text-base mt-1">{location}</Text>
@@ -331,13 +338,18 @@ const Profile = () => {
         {/* Education Section */}
         <ProfileSection title="Education" icon={icons.education}>
           {editing ? (
-            <TextInput
-              className="text-gray-600 text-base border border-purple-300 rounded-xl px-4 py-2 mb-2"
-              value={form.newSchool}
-              placeholder={school}
-              placeholderTextColor="#9CA3AF"
-              onChangeText={(text) => setForm({ ...form, newSchool: text })}
-            />
+            <View>
+              <TextInput
+                className="text-gray-600 text-base border border-purple-300 rounded-xl px-4 py-2 mb-2"
+                value={form.newSchool}
+                placeholder={school}
+                placeholderTextColor="#9CA3AF"
+                onChangeText={(text) => setForm({ ...form, newSchool: text })}
+                returnKeyType="next"
+                autoCapitalize="words"
+                editable={editing}
+              />
+            </View>
           ) : (
             <Text className="text-gray-600 text-base mb-2">{school}</Text>
           )}
@@ -365,13 +377,18 @@ const Profile = () => {
           <View className="mb-4">
             <Text className="font-medium text-gray-800 mb-2">Major:</Text>
             {editing ? (
-              <TextInput
-                className="text-gray-600 border border-purple-300 rounded-xl px-4 py-2"
-                value={form.newMajor}
-                placeholder={major}
-                placeholderTextColor="#9CA3AF"
-                onChangeText={(text) => setForm({ ...form, newMajor: text })}
-              />
+              <View>
+                <TextInput
+                  className="text-gray-600 border border-purple-300 rounded-xl px-4 py-2"
+                  value={form.newMajor}
+                  placeholder={major}
+                  placeholderTextColor="#9CA3AF"
+                  onChangeText={(text) => setForm({ ...form, newMajor: text })}
+                  returnKeyType="next"
+                  autoCapitalize="words"
+                  editable={editing}
+                />
+              </View>
             ) : (
               <View className="bg-gray-100 px-4 py-2 rounded-xl">
                 <Text className="text-gray-700">{major}</Text>
@@ -383,13 +400,18 @@ const Profile = () => {
           <View className="mb-4">
             <Text className="font-medium text-gray-800 mb-2">Career:</Text>
             {editing ? (
-              <TextInput
-                className="text-gray-600 border border-purple-300 rounded-xl px-4 py-2"
-                value={form.newCareer}
-                placeholder={career}
-                placeholderTextColor="#9CA3AF"
-                onChangeText={(text) => setForm({ ...form, newCareer: text })}
-              />
+              <View>
+                <TextInput
+                  className="text-gray-600 border border-purple-300 rounded-xl px-4 py-2"
+                  value={form.newCareer}
+                  placeholder={career}
+                  placeholderTextColor="#9CA3AF"
+                  onChangeText={(text) => setForm({ ...form, newCareer: text })}
+                  returnKeyType="next"
+                  autoCapitalize="words"
+                  editable={editing}
+                />
+              </View>
             ) : (
               <View className="bg-gray-100 px-4 py-2 rounded-xl">
                 <Text className="text-gray-700">{career}</Text>
@@ -409,13 +431,23 @@ const Profile = () => {
 
           {editing && (
             <View className="flex-row items-center mt-4">
-              <TextInput
-                className="flex-1 text-gray-600 border border-purple-300 rounded-xl px-4 py-2 mr-2"
-                value={form.newInterest}
-                placeholder="Add new interest"
-                placeholderTextColor="#9CA3AF"
-                onChangeText={(text) => setForm({ ...form, newInterest: text })}
-              />
+              <View style={{ flex: 1 }}>
+                <TextInput
+                  className="text-gray-600 border border-purple-300 rounded-xl px-4 py-2 mr-2"
+                  value={form.newInterest}
+                  placeholder="Add new interest"
+                  placeholderTextColor="#9CA3AF"
+                  onChangeText={(text) => setForm({ ...form, newInterest: text })}
+                  returnKeyType="done"
+                  autoCapitalize="words"
+                  editable={editing}
+                  onSubmitEditing={() => {
+                    if (form.newInterest.trim() !== "") {
+                      addLabel();
+                    }
+                  }}
+                />
+              </View>
               <TouchableOpacity
                 onPress={() => {
                   if (form.newInterest.trim() !== "") {
@@ -454,7 +486,7 @@ const Profile = () => {
           </View>
         </ProfileSection>
       </SafeAreaView>
-    </ScrollView>
+    </KeyboardAwareScrollView>
   );
 };
 
