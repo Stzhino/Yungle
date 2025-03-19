@@ -1,11 +1,12 @@
-import { View, Text, ScrollView, Switch, TouchableOpacity, StyleSheet, Alert } from 'react-native'
-import React, { useState, useEffect } from 'react'
+import { View, Text, ScrollView, Switch, TouchableOpacity, StyleSheet, Alert, Animated } from 'react-native'
+import React, { useState, useEffect, useRef } from 'react'
 import { useGlobalContext } from '../../context/GlobalProvider'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { getNotificationPreferences, updateNotificationPreferences } from '../../lib/appwrite'
 import useAppwrite from '../../lib/useAppwrite'
-import { Ionicons } from '@expo/vector-icons'; 
-import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons'
+import { useNavigation } from '@react-navigation/native'
+
 const NotificationPreferences = () => {
   const { user } = useGlobalContext();
   const navigation = useNavigation();
@@ -18,10 +19,27 @@ const NotificationPreferences = () => {
     position: 'top'
   });
 
+  // Animation values
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(20)).current;
+
   useEffect(() => {
     if (savedPreferences) {
       setPreferences(savedPreferences);
     }
+    // Fade in animation
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+    ]).start();
   }, [savedPreferences]);
 
   const toggleSwitch = async (key) => {
@@ -55,89 +73,123 @@ const NotificationPreferences = () => {
     }
   };
 
+  const NotificationOption = ({ title, description, value, onToggle }) => (
+    <Animated.View 
+      style={{ 
+        opacity: fadeAnim,
+        transform: [{ translateY: slideAnim }]
+      }}
+      className="mb-3"
+    >
+      <View className="flex-row justify-between items-center p-4 bg-white rounded-xl shadow-sm border border-gray-100">
+        <View className="flex-1 mr-4">
+          <Text className="font-semibold text-gray-800 text-base">{title}</Text>
+          <Text className="text-gray-500 text-sm mt-1" numberOfLines={2}>
+            {description}
+          </Text>
+        </View>
+        <Switch
+          value={value}
+          onValueChange={onToggle}
+          trackColor={{ false: '#E5E7EB', true: '#9902d3' }}
+          thumbColor={value ? '#ffffff' : '#f4f3f4'}
+          ios_backgroundColor="#E5E7EB"
+          style={{ transform: [{ scaleX: 0.9 }, { scaleY: 0.9 }] }}
+        />
+      </View>
+    </Animated.View>
+  );
+
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <ScrollView className="flex-1 px-4">
-      <View className="flex-row items-center p-4 border-b border-gray-200">
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+    <SafeAreaView className="flex-1 bg-gray-50">
+      {/* Header */}
+      <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
+        <TouchableOpacity 
+          onPress={() => navigation.goBack()}
+          className="p-2 -ml-2"
+        >
           <Ionicons name="arrow-back" size={24} color="#6D28D9" />
         </TouchableOpacity>
-        <Text className="text-2xl font-bold ml-4">Notification Settings</Text>
+        <Text className="text-xl font-bold ml-2 text-gray-800">Notification Settings</Text>
       </View>
-        <View className="mb-6">
-          <Text className="text-lg font-semibold mb-3">Notification Position</Text>
-          <View className="flex-row space-x-4">
-            <TouchableOpacity 
-              onPress={() => setPosition('top')}
-              className={`flex-1 p-4 rounded-lg border-2 ${preferences.position === 'top' ? 'border-purple-500 bg-purple-50' : 'border-gray-200'}`}
-            >
-              <Text className={`text-center ${preferences.position === 'top' ? 'text-purple-500 font-semibold' : 'text-gray-600'}`}>
-                Top
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              onPress={() => setPosition('bottom')}
-              className={`flex-1 p-4 rounded-lg border-2 ${preferences.position === 'bottom' ? 'border-purple-500 bg-purple-50' : 'border-gray-200'}`}
-            >
-              <Text className={`text-center ${preferences.position === 'bottom' ? 'text-purple-500 font-semibold' : 'text-gray-600'}`}>
-                Bottom
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
 
-        <View className="space-y-4">
-          <Text className="text-lg font-semibold mb-3">Notification Types</Text>
-          
-          <View className="flex-row justify-between items-center p-4 bg-gray-50 rounded-lg">
-            <View>
-              <Text className="font-semibold">Friend Requests</Text>
-              <Text className="text-gray-500 text-sm">Get notified when someone sends you a friend request</Text>
+      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+        <View className="px-4 py-6">
+          {/* Position Section */}
+          <Animated.View 
+            style={{ 
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }]
+            }}
+            className="mb-8"
+          >
+            <Text className="text-lg font-semibold mb-3 text-gray-800">Notification Position</Text>
+            <View className="flex-row space-x-4">
+              <TouchableOpacity 
+                onPress={() => setPosition('top')}
+                className={`flex-1 py-4 rounded-xl shadow-sm ${preferences.position === 'top' ? 'bg-purple-500' : 'bg-white border border-gray-200'}`}
+                style={{ elevation: preferences.position === 'top' ? 2 : 0 }}
+              >
+                <View className="items-center">
+                  <Ionicons 
+                    name="arrow-up" 
+                    size={24} 
+                    color={preferences.position === 'top' ? '#ffffff' : '#6B7280'} 
+                  />
+                  <Text className={`text-center mt-1 ${preferences.position === 'top' ? 'text-white font-semibold' : 'text-gray-600'}`}>
+                    Top
+                  </Text>
+                </View>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                onPress={() => setPosition('bottom')}
+                className={`flex-1 py-4 rounded-xl shadow-sm ${preferences.position === 'bottom' ? 'bg-purple-500' : 'bg-white border border-gray-200'}`}
+                style={{ elevation: preferences.position === 'bottom' ? 2 : 0 }}
+              >
+                <View className="items-center">
+                  <Ionicons 
+                    name="arrow-down" 
+                    size={24} 
+                    color={preferences.position === 'bottom' ? '#ffffff' : '#6B7280'} 
+                  />
+                  <Text className={`text-center mt-1 ${preferences.position === 'bottom' ? 'text-white font-semibold' : 'text-gray-600'}`}>
+                    Bottom
+                  </Text>
+                </View>
+              </TouchableOpacity>
             </View>
-            <Switch
+          </Animated.View>
+
+          {/* Notification Types Section */}
+          <View className="space-y-4">
+            <Text className="text-lg font-semibold mb-3 text-gray-800">Notification Types</Text>
+            
+            <NotificationOption
+              title="Friend Requests"
+              description="Get notified when someone sends you a friend request"
               value={preferences.friendRequests}
-              onValueChange={() => toggleSwitch('friendRequests')}
-              trackColor={{ false: '#767577', true: '#9902d3' }}
-              thumbColor={preferences.friendRequests ? '#ffffff' : '#f4f3f4'}
+              onToggle={() => toggleSwitch('friendRequests')}
             />
-          </View>
 
-          <View className="flex-row justify-between items-center p-4 bg-gray-50 rounded-lg">
-            <View>
-              <Text className="font-semibold">Messages</Text>
-              <Text className="text-gray-500 text-sm">Get notified when you receive new messages</Text>
-            </View>
-            <Switch
+            <NotificationOption
+              title="Messages"
+              description="Get notified when you receive new messages"
               value={preferences.messages}
-              onValueChange={() => toggleSwitch('messages')}
-              trackColor={{ false: '#767577', true: '#9902d3' }}
-              thumbColor={preferences.messages ? '#ffffff' : '#f4f3f4'}
+              onToggle={() => toggleSwitch('messages')}
             />
-          </View>
 
-          <View className="flex-row justify-between items-center p-4 bg-gray-50 rounded-lg">
-            <View>
-              <Text className="font-semibold">Likes</Text>
-              <Text className="text-gray-500 text-sm">Get notified when someone likes your post</Text>
-            </View>
-            <Switch
+            <NotificationOption
+              title="Likes"
+              description="Get notified when someone likes your post"
               value={preferences.likes}
-              onValueChange={() => toggleSwitch('likes')}
-              trackColor={{ false: '#767577', true: '#9902d3' }}
-              thumbColor={preferences.likes ? '#ffffff' : '#f4f3f4'}
+              onToggle={() => toggleSwitch('likes')}
             />
-          </View>
 
-          <View className="flex-row justify-between items-center p-4 bg-gray-50 rounded-lg">
-            <View>
-              <Text className="font-semibold">Comments</Text>
-              <Text className="text-gray-500 text-sm">Get notified when someone comments on your post</Text>
-            </View>
-            <Switch
+            <NotificationOption
+              title="Comments"
+              description="Get notified when someone comments on your post"
               value={preferences.comments}
-              onValueChange={() => toggleSwitch('comments')}
-              trackColor={{ false: '#767577', true: '#9902d3' }}
-              thumbColor={preferences.comments ? '#ffffff' : '#f4f3f4'}
+              onToggle={() => toggleSwitch('comments')}
             />
           </View>
         </View>

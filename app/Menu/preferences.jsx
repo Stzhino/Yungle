@@ -1,138 +1,283 @@
-import { View, Text, ScrollView, Switch, TouchableOpacity, Alert } from 'react-native';
-import React, { useState } from 'react';
-import { useGlobalContext } from '../../context/GlobalProvider';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons'; 
+import { View, Text, ScrollView, TouchableOpacity, Switch, Animated } from 'react-native'
+import React, { useState, useRef, useEffect } from 'react'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { Ionicons } from '@expo/vector-icons'
+import { useNavigation } from '@react-navigation/native'
 
 const Preferences = () => {
-  const { user } = useGlobalContext();
   const navigation = useNavigation();
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(20)).current;
+
   const [preferences, setPreferences] = useState({
-    language: 'en',
-    countryRegion: 'US',
-    darkMode: false,
-    fontSize: 'medium',
+    notifications: {
+      push: true,
+      email: true,
+      inApp: true,
+      sound: true,
+      vibration: true
+    },
+    privacy: {
+      showOnlineStatus: true,
+      showLastSeen: false,
+      showReadReceipts: true
+    },
+    content: {
+      autoplay: true,
+      dataSaver: false,
+      darkMode: false,
+      language: 'English'
+    }
   });
 
-  const updatePreference = (key, value) => {
-    setPreferences((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
-  };
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
 
-  const handleSave = () => {
-   // console.log('Preferences to save:', preferences);
-    //Alert.alert('Success', 'Preferences saved successfully!');
-    navigation.goBack(); 
-  };
+  const PreferenceSection = ({ title, icon, children }) => (
+    <Animated.View
+      style={{
+        opacity: fadeAnim,
+        transform: [{ translateY: slideAnim }]
+      }}
+      className="mb-6 bg-white rounded-2xl p-4 shadow-sm"
+    >
+      <View className="flex-row items-center mb-4">
+        <View className="w-8 h-8 rounded-full bg-purple-100 items-center justify-center mr-3">
+          {icon}
+        </View>
+        <Text className="text-lg font-semibold text-gray-800">{title}</Text>
+      </View>
+      {children}
+    </Animated.View>
+  );
+
+  const ToggleOption = ({ title, subtitle, value, onToggle }) => (
+    <View className="flex-row items-center justify-between p-3 bg-gray-50 rounded-xl mb-2">
+      <View className="flex-1 mr-4">
+        <Text className="font-medium text-gray-800">{title}</Text>
+        {subtitle && (
+          <Text className="text-gray-500 text-sm mt-1">{subtitle}</Text>
+        )}
+      </View>
+      <Switch
+        value={value}
+        onValueChange={onToggle}
+        trackColor={{ false: '#E5E7EB', true: '#9333EA' }}
+        thumbColor={'#ffffff'}
+        ios_backgroundColor="#E5E7EB"
+      />
+    </View>
+  );
+
+  const SelectOption = ({ title, options, selectedOption, onSelect }) => (
+    <View className="mb-2">
+      <Text className="font-medium text-gray-800 mb-2">{title}</Text>
+      <View className="flex-row flex-wrap gap-2">
+        {options.map((option) => (
+          <TouchableOpacity
+            key={option}
+            onPress={() => onSelect(option)}
+            className={`px-4 py-2 rounded-full ${
+              selectedOption === option
+                ? 'bg-purple-500'
+                : 'bg-gray-100'
+            }`}
+          >
+            <Text
+              className={`font-medium ${
+                selectedOption === option
+                  ? 'text-white'
+                  : 'text-gray-600'
+              }`}
+            >
+              {option}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
+  );
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <View className="flex-row items-center p-4 border-b border-gray-200">
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+    <SafeAreaView className="flex-1 bg-gray-50">
+      {/* Header */}
+      <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
+        <TouchableOpacity 
+          onPress={() => navigation.goBack()}
+          className="p-2 -ml-2"
+        >
           <Ionicons name="arrow-back" size={24} color="#6D28D9" />
         </TouchableOpacity>
-        <Text className="text-2xl font-bold ml-4">Preferences</Text>
+        <Text className="text-xl font-bold ml-2 text-gray-800">Preferences</Text>
       </View>
 
-      <ScrollView className="flex-1 px-4">
-      
-
-        <View className="mb-6">
-          <Text className="text-lg font-semibold mb-3">Language</Text>
-          <View className="flex-row space-x-4">
-            <TouchableOpacity
-              onPress={() => updatePreference('language', 'en')}
-              className={`flex-1 p-4 rounded-lg border-2 ${preferences.language === 'en' ? 'border-purple-500 bg-purple-50' : 'border-gray-200'}`}
-            >
-              <Text className={`text-center ${preferences.language === 'en' ? 'text-purple-500 font-semibold' : 'text-gray-600'}`}>
-                English
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => updatePreference('language', 'es')}
-              className={`flex-1 p-4 rounded-lg border-2 ${preferences.language === 'es' ? 'border-purple-500 bg-purple-50' : 'border-gray-200'}`}
-            >
-              <Text className={`text-center ${preferences.language === 'es' ? 'text-purple-500 font-semibold' : 'text-gray-600'}`}>
-                Spanish
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View className="mb-6">
-          <Text className="text-lg font-semibold mb-3">Country/Region</Text>
-          <View className="flex-row space-x-4">
-            <TouchableOpacity
-              onPress={() => updatePreference('countryRegion', 'US')}
-              className={`flex-1 p-4 rounded-lg border-2 ${preferences.countryRegion === 'US' ? 'border-purple-500 bg-purple-50' : 'border-gray-200'}`}
-            >
-              <Text className={`text-center ${preferences.countryRegion === 'US' ? 'text-purple-500 font-semibold' : 'text-gray-600'}`}>
-                United States
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => updatePreference('countryRegion', 'CA')}
-              className={`flex-1 p-4 rounded-lg border-2 ${preferences.countryRegion === 'CA' ? 'border-purple-500 bg-purple-50' : 'border-gray-200'}`}
-            >
-              <Text className={`text-center ${preferences.countryRegion === 'CA' ? 'text-purple-500 font-semibold' : 'text-gray-600'}`}>
-                Canada
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View className="flex-row justify-between items-center p-4 bg-gray-50 rounded-lg mb-6">
-          <View>
-            <Text className="font-semibold">Dark Mode</Text>
-            <Text className="text-gray-500 text-sm">Enable dark mode for better night-time viewing</Text>
-          </View>
-          <Switch
-            value={preferences.darkMode}
-            onValueChange={() => updatePreference('darkMode', !preferences.darkMode)}
-            trackColor={{ false: '#767577', true: '#9902d3' }}
-            thumbColor={preferences.darkMode ? '#ffffff' : '#f4f3f4'}
-          />
-        </View>
-
-        <View className="mb-6">
-          <Text className="text-lg font-semibold mb-3">Font Size</Text>
-          <View className="flex-row space-x-4">
-            <TouchableOpacity
-              onPress={() => updatePreference('fontSize', 'small')}
-              className={`flex-1 p-4 rounded-lg border-2 ${preferences.fontSize === 'small' ? 'border-purple-500 bg-purple-50' : 'border-gray-200'}`}
-            >
-              <Text className={`text-center ${preferences.fontSize === 'small' ? 'text-purple-500 font-semibold' : 'text-gray-600'}`}>
-                Small
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => updatePreference('fontSize', 'medium')}
-              className={`flex-1 p-4 rounded-lg border-2 ${preferences.fontSize === 'medium' ? 'border-purple-500 bg-purple-50' : 'border-gray-200'}`}
-            >
-              <Text className={`text-center ${preferences.fontSize === 'medium' ? 'text-purple-500 font-semibold' : 'text-gray-600'}`}>
-                Medium
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => updatePreference('fontSize', 'large')}
-              className={`flex-1 p-4 rounded-lg border-2 ${preferences.fontSize === 'large' ? 'border-purple-500 bg-purple-50' : 'border-gray-200'}`}
-            >
-              <Text className={`text-center ${preferences.fontSize === 'large' ? 'text-purple-500 font-semibold' : 'text-gray-600'}`}>
-                Large
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <TouchableOpacity
-          onPress={handleSave}
-          className="bg-purple-500 p-4 rounded-lg mt-6 mb-8"
+      <ScrollView className="flex-1 p-4">
+        {/* Notification Preferences */}
+        <PreferenceSection 
+          title="Notifications" 
+          icon={<Ionicons name="notifications" size={20} color="#9333EA" />}
         >
-          <Text className="text-white text-center font-semibold">Save Preferences</Text>
-        </TouchableOpacity>
+          <ToggleOption
+            title="Push Notifications"
+            subtitle="Receive push notifications on your device"
+            value={preferences.notifications.push}
+            onToggle={(value) => 
+              setPreferences(prev => ({
+                ...prev,
+                notifications: { ...prev.notifications, push: value }
+              }))
+            }
+          />
+          <ToggleOption
+            title="Email Notifications"
+            subtitle="Receive important updates via email"
+            value={preferences.notifications.email}
+            onToggle={(value) =>
+              setPreferences(prev => ({
+                ...prev,
+                notifications: { ...prev.notifications, email: value }
+              }))
+            }
+          />
+          <ToggleOption
+            title="In-App Notifications"
+            subtitle="Show notifications within the app"
+            value={preferences.notifications.inApp}
+            onToggle={(value) =>
+              setPreferences(prev => ({
+                ...prev,
+                notifications: { ...prev.notifications, inApp: value }
+              }))
+            }
+          />
+          <ToggleOption
+            title="Sound"
+            subtitle="Play sound for notifications"
+            value={preferences.notifications.sound}
+            onToggle={(value) =>
+              setPreferences(prev => ({
+                ...prev,
+                notifications: { ...prev.notifications, sound: value }
+              }))
+            }
+          />
+          <ToggleOption
+            title="Vibration"
+            subtitle="Vibrate for notifications"
+            value={preferences.notifications.vibration}
+            onToggle={(value) =>
+              setPreferences(prev => ({
+                ...prev,
+                notifications: { ...prev.notifications, vibration: value }
+              }))
+            }
+          />
+        </PreferenceSection>
+
+        {/* Privacy Preferences */}
+        <PreferenceSection 
+          title="Privacy" 
+          icon={<Ionicons name="eye" size={20} color="#9333EA" />}
+        >
+          <ToggleOption
+            title="Show Online Status"
+            subtitle="Let others see when you're online"
+            value={preferences.privacy.showOnlineStatus}
+            onToggle={(value) =>
+              setPreferences(prev => ({
+                ...prev,
+                privacy: { ...prev.privacy, showOnlineStatus: value }
+              }))
+            }
+          />
+          <ToggleOption
+            title="Show Last Seen"
+            subtitle="Let others see when you were last active"
+            value={preferences.privacy.showLastSeen}
+            onToggle={(value) =>
+              setPreferences(prev => ({
+                ...prev,
+                privacy: { ...prev.privacy, showLastSeen: value }
+              }))
+            }
+          />
+          <ToggleOption
+            title="Read Receipts"
+            subtitle="Show others when you've read their messages"
+            value={preferences.privacy.showReadReceipts}
+            onToggle={(value) =>
+              setPreferences(prev => ({
+                ...prev,
+                privacy: { ...prev.privacy, showReadReceipts: value }
+              }))
+            }
+          />
+        </PreferenceSection>
+
+        {/* Content Preferences */}
+        <PreferenceSection 
+          title="Content & Display" 
+          icon={<Ionicons name="settings" size={20} color="#9333EA" />}
+        >
+          <ToggleOption
+            title="Autoplay Media"
+            subtitle="Automatically play videos and animations"
+            value={preferences.content.autoplay}
+            onToggle={(value) =>
+              setPreferences(prev => ({
+                ...prev,
+                content: { ...prev.content, autoplay: value }
+              }))
+            }
+          />
+          <ToggleOption
+            title="Data Saver"
+            subtitle="Reduce data usage when using the app"
+            value={preferences.content.dataSaver}
+            onToggle={(value) =>
+              setPreferences(prev => ({
+                ...prev,
+                content: { ...prev.content, dataSaver: value }
+              }))
+            }
+          />
+          <ToggleOption
+            title="Dark Mode"
+            subtitle="Use dark theme throughout the app"
+            value={preferences.content.darkMode}
+            onToggle={(value) =>
+              setPreferences(prev => ({
+                ...prev,
+                content: { ...prev.content, darkMode: value }
+              }))
+            }
+          />
+          <View className="mt-4">
+            <SelectOption
+              title="Language"
+              options={['English', 'Spanish', 'French', 'German']}
+              selectedOption={preferences.content.language}
+              onSelect={(option) =>
+                setPreferences(prev => ({
+                  ...prev,
+                  content: { ...prev.content, language: option }
+                }))
+              }
+            />
+          </View>
+        </PreferenceSection>
       </ScrollView>
     </SafeAreaView>
   );

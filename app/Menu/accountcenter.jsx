@@ -1,166 +1,176 @@
-import { View, Text, ScrollView, Switch, TouchableOpacity, TextInput, Alert } from 'react-native';
-import React, { useState } from 'react';
-import { useGlobalContext } from '../../context/GlobalProvider';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons'; 
+import { View, Text, ScrollView, TouchableOpacity, Switch, Image, Animated, TextInput, Alert } from 'react-native'
+import React, { useState, useRef, useEffect } from 'react'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons'
+import { useNavigation } from '@react-navigation/native'
+import { useGlobalContext } from '../../context/GlobalProvider'
 
 const AccountCenter = () => {
-  const { user } = useGlobalContext();
   const navigation = useNavigation();
-  const [settings, setSettings] = useState({
-    password: '',
-    newPassword: '',
-    confirmNewPassword: '',
-    twoFactorEnabled: false,
-    emergencyContact: '',
-    securityQuestion: '',
-    securityAnswer: '',
-  });
+  const { user, setUser } = useGlobalContext();
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(20)).current;
 
-  const handleUpdatePassword = () => {
-    if (settings.newPassword !== settings.confirmNewPassword) {
-      Alert.alert('Error', 'New password and confirm password do not match.');
-      return;
-    }
-    // console.log('Updating password:', settings.newPassword); 
-    Alert.alert('Success', 'Password updated successfully!');
-    setSettings({ ...settings, password: '', newPassword: '', confirmNewPassword: '' });
-  };
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
 
-  const handleUpdate2FA = () => {
+  const AccountSection = ({ title, icon, children }) => (
+    <Animated.View
+      style={{
+        opacity: fadeAnim,
+        transform: [{ translateY: slideAnim }]
+      }}
+      className="mb-6 bg-white rounded-2xl p-4 shadow-sm"
+    >
+      <View className="flex-row items-center mb-4">
+        <View className="w-8 h-8 rounded-full bg-purple-100 items-center justify-center mr-3">
+          {icon}
+        </View>
+        <Text className="text-lg font-semibold text-gray-800">{title}</Text>
+      </View>
+      {children}
+    </Animated.View>
+  );
 
-    // console.log('Updating 2FA:', settings.twoFactorEnabled); 
-    Alert.alert('Success', 'Two-factor authentication updated successfully!');
-  };
-
-  const handleUpdateEmergencyContact = () => {
-    if (!settings.emergencyContact) {
-      Alert.alert('Error', 'Please enter an emergency contact.');
-      return;
-    }
-    // console.log('Updating emergency contact:', settings.emergencyContact); 
-    Alert.alert('Success', 'Emergency contact updated successfully!');
-    setSettings({ ...settings, emergencyContact: '' });
-  };
-
-  const handleUpdateSecurityQuestion = () => {
-    if (!settings.securityQuestion || !settings.securityAnswer) {
-      Alert.alert('Error', 'Please enter both a security question and answer.');
-      return;
-    }
-    // console.log('Updating security question:', settings.securityQuestion); 
-    // console.log('Updating security answer:', settings.securityAnswer);
-    Alert.alert('Success', 'Security question and answer updated successfully!');
-    setSettings({ ...settings, securityQuestion: '', securityAnswer: '' });
-  };
+  const AccountOption = ({ title, subtitle, onPress, rightElement }) => (
+    <TouchableOpacity
+      onPress={onPress}
+      className="flex-row items-center justify-between p-3 bg-gray-50 rounded-xl mb-2"
+    >
+      <View className="flex-1 mr-4">
+        <Text className="font-medium text-gray-800">{title}</Text>
+        {subtitle && (
+          <Text className="text-gray-500 text-sm mt-1">{subtitle}</Text>
+        )}
+      </View>
+      {rightElement || (
+        <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+      )}
+    </TouchableOpacity>
+  );
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <View className="flex-row items-center p-4 border-b border-gray-200">
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+    <SafeAreaView className="flex-1 bg-gray-50">
+      {/* Header */}
+      <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
+        <TouchableOpacity 
+          onPress={() => navigation.goBack()}
+          className="p-2 -ml-2"
+        >
           <Ionicons name="arrow-back" size={24} color="#6D28D9" />
         </TouchableOpacity>
-        <Text className="text-2xl font-bold ml-4">Account Center</Text>
+        <Text className="text-xl font-bold ml-2 text-gray-800">Account Center</Text>
       </View>
 
-      <ScrollView className="flex-1 px-4">
-        <View className="mb-6">
-          <Text className="text-lg font-semibold mb-3">Change Password</Text>
-          <TextInput
-            className="p-4 bg-gray-50 rounded-lg mb-3"
-            placeholder="Current Password"
-            secureTextEntry
-            value={settings.password}
-            onChangeText={(text) => setSettings({ ...settings, password: text })}
+      <ScrollView className="flex-1 p-4">
+        {/* Profile Overview */}
+        <AccountSection 
+          title="Profile Overview" 
+          icon={<Ionicons name="person" size={20} color="#9333EA" />}
+        >
+          <View className="flex-row items-center mb-4">
+            <Image
+              source={{ uri: user?.avatar }}
+              className="w-16 h-16 rounded-full bg-gray-200"
+            />
+            <View className="ml-4 flex-1">
+              <Text className="text-lg font-semibold text-gray-800">{user?.name}</Text>
+              <Text className="text-gray-500">{user?.email}</Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('EditProfile')}
+              className="bg-purple-100 p-2 rounded-full"
+            >
+              <Ionicons name="pencil" size={20} color="#9333EA" />
+            </TouchableOpacity>
+          </View>
+        </AccountSection>
+
+        {/* Security Settings */}
+        <AccountSection 
+          title="Security" 
+          icon={<Ionicons name="shield-checkmark" size={20} color="#9333EA" />}
+        >
+          <AccountOption
+            title="Change Password"
+            subtitle="Update your password regularly"
+            onPress={() => navigation.navigate('ChangePassword')}
           />
-          <TextInput
-            className="p-4 bg-gray-50 rounded-lg mb-3"
-            placeholder="New Password"
-            secureTextEntry
-            value={settings.newPassword}
-            onChangeText={(text) => setSettings({ ...settings, newPassword: text })}
+          <AccountOption
+            title="Two-Factor Authentication"
+            subtitle="Add an extra layer of security"
+            onPress={() => navigation.navigate('2FA')}
+            rightElement={
+              <Switch
+                value={false}
+                onValueChange={() => {}}
+                trackColor={{ false: '#E5E7EB', true: '#9333EA' }}
+                thumbColor={'#ffffff'}
+                ios_backgroundColor="#E5E7EB"
+              />
+            }
           />
-          <TextInput
-            className="p-4 bg-gray-50 rounded-lg mb-3"
-            placeholder="Confirm New Password"
-            secureTextEntry
-            value={settings.confirmNewPassword}
-            onChangeText={(text) => setSettings({ ...settings, confirmNewPassword: text })}
+        </AccountSection>
+
+        {/* Privacy */}
+        <AccountSection 
+          title="Privacy" 
+          icon={<Ionicons name="lock-closed" size={20} color="#9333EA" />}
+        >
+          <AccountOption
+            title="Profile Visibility"
+            subtitle="Control who can see your profile"
+            onPress={() => navigation.navigate('Privacy')}
+          />
+          <AccountOption
+            title="Blocked Users"
+            subtitle="Manage your blocked users list"
+            onPress={() => navigation.navigate('BlockedUsers')}
+          />
+        </AccountSection>
+
+        {/* Account Management */}
+        <AccountSection 
+          title="Account Management" 
+          icon={<Ionicons name="settings" size={20} color="#9333EA" />}
+        >
+          <AccountOption
+            title="Download Your Data"
+            subtitle="Get a copy of your data"
+            onPress={() => Alert.alert('Download Data', 'This feature will be available soon')}
           />
           <TouchableOpacity
-            onPress={handleUpdatePassword}
-            className="bg-purple-500 p-3 rounded-lg"
+            className="flex-row items-center p-3 bg-red-50 rounded-xl"
+            onPress={() => Alert.alert(
+              'Delete Account',
+              'Are you sure you want to delete your account? This action cannot be undone.',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Delete', style: 'destructive', onPress: () => {} }
+              ]
+            )}
           >
-            <Text className="text-white text-center font-semibold">Update Password</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View className="mb-6">
-          <Text className="text-lg font-semibold mb-3">Two-Factor Authentication</Text>
-          <View className="flex-row justify-between items-center p-4 bg-gray-50 rounded-lg">
-            <View>
-              <Text className="font-semibold">Enable 2FA</Text>
-              <Text className="text-gray-500 text-sm">
-                Add an extra layer of security to your account
+            <View className="flex-1">
+              <Text className="font-medium text-red-600">Delete Account</Text>
+              <Text className="text-red-400 text-sm mt-1">
+                Permanently delete your account and data
               </Text>
             </View>
-            <Switch
-              value={settings.twoFactorEnabled}
-              onValueChange={() =>
-                setSettings({ ...settings, twoFactorEnabled: !settings.twoFactorEnabled })
-              }
-              trackColor={{ false: '#767577', true: '#9902d3' }}
-              thumbColor={settings.twoFactorEnabled ? '#ffffff' : '#f4f3f4'}
-            />
-          </View>
-          <TouchableOpacity
-            onPress={handleUpdate2FA}
-            className="bg-purple-500 p-3 rounded-lg mt-3"
-          >
-            <Text className="text-white text-center font-semibold">Update 2FA</Text>
+            <Ionicons name="trash-bin" size={20} color="#DC2626" />
           </TouchableOpacity>
-        </View>
-
-        <View className="mb-6">
-          <Text className="text-lg font-semibold mb-3">Emergency Contact</Text>
-          <TextInput
-            className="p-4 bg-gray-50 rounded-lg mb-3"
-            placeholder="Emergency Contact Number"
-            keyboardType="phone-pad"
-            value={settings.emergencyContact}
-            onChangeText={(text) => setSettings({ ...settings, emergencyContact: text })}
-          />
-          <TouchableOpacity
-            onPress={handleUpdateEmergencyContact}
-            className="bg-purple-500 p-3 rounded-lg"
-          >
-            <Text className="text-white text-center font-semibold">Update Emergency Contact</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View className="mb-6">
-          <Text className="text-lg font-semibold mb-3">Security Question</Text>
-          <TextInput
-            className="p-4 bg-gray-50 rounded-lg mb-3"
-            placeholder="Security Question (e.g., What is your mother's maiden name?)"
-            value={settings.securityQuestion}
-            onChangeText={(text) => setSettings({ ...settings, securityQuestion: text })}
-          />
-          <TextInput
-            className="p-4 bg-gray-50 rounded-lg mb-3"
-            placeholder="Answer"
-            secureTextEntry
-            value={settings.securityAnswer}
-            onChangeText={(text) => setSettings({ ...settings, securityAnswer: text })}
-          />
-          <TouchableOpacity
-            onPress={handleUpdateSecurityQuestion}
-            className="bg-purple-500 p-3 rounded-lg"
-          >
-            <Text className="text-white text-center font-semibold">Update Security Question</Text>
-          </TouchableOpacity>
-        </View>
+        </AccountSection>
       </ScrollView>
     </SafeAreaView>
   );
