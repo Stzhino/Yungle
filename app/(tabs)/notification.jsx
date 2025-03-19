@@ -10,7 +10,7 @@ const searchFunct = (search, notifArr) => {
   if (search !== '') {
     return notifArr.filter(
       (item) =>
-        item.name.includes(search) ||
+        item.sender.username.includes(search) ||
         item.description.includes(search) ||
         item.title.includes(search)
     );
