@@ -30,7 +30,7 @@ return (<View className="flex-1 items-center bg-white">
   {isLoading==true?
   (<ActivityIndicator size="large" color="#0000ff"/>
   ):(
-<View className="flex-1 bg-blue-500">
+<View className="flex-1 bg-purple-500">
   <View className="w-full h-[80%] ">
     <FlatList
     data={messages}

@@ -1,6 +1,6 @@
 import { View,Text,Image } from "react-native";
 const MessageBubble=({message,isConsecutive})=>{
-const {time,read,receiver,sender,Message,sessionID}= message;
+const {time,read,sender,Message,sessionID}= message;
 console.log(time);
 const formatedTime = new Date(time).toLocaleDateString("en-US");
 return(<View className="w-full flex-row bg-white">
