@@ -3,9 +3,9 @@ import { useRouter } from "expo-router";
 import { useGlobalContext } from "@/context/GlobalProvider";
 import { calculateTimeDifference } from '../lib/calculation';
 const ChatSession = ({session})=>{
-   const {title, PersonA,PersonAProfile,PersonB,PersonBProfile,recentMessage,messageSender,messageDate} = session
+   const {title, PersonA,PersonB,recentMessage,messageSender,messageDate} = session
     const { user, setUser, setIsLogged } = useGlobalContext();
-    let recipientProfile = user.username=PersonA ? PersonBProfile : PersonAProfile;
+    let recipientProfile = user.username=PersonA ? PersonB.avatar : PersonA.avatar;
     const router = useRouter();
     console.log(`SessionID:${session.$id}`)
     const timeDifference = calculateTimeDifference(messageDate)
