@@ -27,12 +27,18 @@ const Group = () => {
 
   const startChat = async (selectedUser) => {
     try {
-      let chatExists = chatSession.find(session =>
+      await refetch();
+      const updatedChatSessions = chatSession || [];
+
+      let chatExists = updatedChatSessions.find(session =>
         (session.PersonA === user.$id && session.PersonB === selectedUser.$id) ||
         (session.PersonB === user.$id && session.PersonA === selectedUser.$id)
       );
 
-      if (!chatExists) {
+      if (chatExists) {
+        console.log("Chat session already exists:", chatExists);
+      } else {
+        console.log("Creating new chat session...");
         chatExists = await createChatSession(
           user.$id,
           selectedUser.$id,
@@ -40,8 +46,6 @@ const Group = () => {
           selectedUser.username
         );
         refetch();
-      } else {
-        console.log("Chat session already exists:", chatExists);
       }
 
       setShowUserList(false);
