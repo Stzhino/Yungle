@@ -1,10 +1,13 @@
-import { SafeAreaView, View, Text, FlatList, TouchableOpacity, Modal, Image, TextInput } from 'react-native';
-import React, { useState, useEffect } from 'react';
+import { SafeAreaView, View, Text, FlatList, TouchableOpacity, Modal, Image, TextInput, Animated, ScrollView, Alert } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
 import { useGlobalContext } from "@/context/GlobalProvider";
-import { getChatSession, getUsers, createChatSession } from "../../lib/appwrite";
+import { getChatSession, getUsers, createChatSession, deleteChatSession } from "../../lib/appwrite";
 import useAppwrite from "../../lib/useAppwrite";
 import ChatSession from "@/components/ChatSession";
 import { useRouter } from "expo-router";
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
+import { GestureHandlerRootView, Swipeable } from 'react-native-gesture-handler';
 
 const newMessageIcon = require('../../assets/icons/new-message.png');
 
@@ -15,6 +18,34 @@ const Group = () => {
   const [searchText, setSearchText] = useState('');
   const [users, setUsers] = useState([]);
   const router = useRouter();
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [selectedChat, setSelectedChat] = useState(null);
+  let swipeableRef = useRef(null);
+
+  // Animation values
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(20)).current;
+  const headerScale = useRef(new Animated.Value(0.95)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+      Animated.spring(headerScale, {
+        toValue: 1,
+        friction: 8,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
 
   const fetchUsers = async () => {
     try {
@@ -27,125 +58,354 @@ const Group = () => {
 
   const startChat = async (selectedUser) => {
     try {
+      // First check if we already have the chat sessions
       await refetch();
-      const updatedChatSessions = chatSession || [];
+      const existingChatSessions = chatSession || [];
 
-      let chatExists = updatedChatSessions.find(session =>
-        (session.PersonA === user.$id && session.PersonB === selectedUser.$id) ||
-        (session.PersonB === user.$id && session.PersonA === selectedUser.$id)
+      // Check if a chat already exists with this user
+      const existingChat = existingChatSessions.find(session =>
+        (session.PersonA.$id === user.$id && session.PersonB.$id === selectedUser.$id) ||
+        (session.PersonB.$id === user.$id && session.PersonA.$id === selectedUser.$id)
       );
 
-      if (chatExists) {
-        console.log("Chat session already exists:", chatExists);
-      } else {
-        console.log("Creating new chat session...");
-        chatExists = await createChatSession(
-          user.$id,
-          selectedUser.$id,
-          user.username,
-          selectedUser.username
-        );
-        refetch();
+      if (existingChat) {
+        // If chat exists, just navigate to it
+        setShowUserList(false);
+        router.push({
+          pathname: "/message",
+          params: {
+            SessionID: existingChat.$id,
+            recipientName: selectedUser.username
+          }
+        });
+        return;
       }
 
+      // If no existing chat, create a new one
+      console.log("Creating new chat session...");
+      const newChat = await createChatSession(
+        user.$id,
+        selectedUser.$id,
+        user.username,
+        selectedUser.username
+      );
+
       setShowUserList(false);
-
-      console.log("Navigating to message screen with:", {
-        SessionID: chatExists.$id,
-        recipientName: selectedUser.username
-      });
-
       router.push({
         pathname: "/message",
         params: {
-          SessionID: chatExists.$id,
+          SessionID: newChat.$id,
           recipientName: selectedUser.username
         }
       });
 
     } catch (error) {
-      console.error("Error starting new chat session:", error);
+      console.error("Error starting chat session:", error);
     }
   };
 
-  return (
-    <SafeAreaView className="flex-1 bg-gray-100">
-      <View className="px-4 pt-6">
-        <Text className="text-2xl font-bold text-gray-900 mb-4">Messages</Text>
-      </View>
+  const handleDeleteChat = async () => {
+    if (!selectedChat) return;
 
-      <FlatList
-        data={chatSession}
-        keyExtractor={(item) => item.$id}
-        renderItem={({ item }) => {
-          let chatTitle = item.title || "Unknown User";
-          chatTitle = chatTitle.replace(/https:\/\/cloud\.appwrite\.io\/v1\/avatars\/initials\?.*?&/, "").trim();
-          chatTitle = chatTitle.replace(/project=[^&]*&\s*/, "").trim();
+    try {
+      await deleteChatSession(selectedChat.$id);
+      refetch(); // Refresh the chat list
+      setDeleteModalVisible(false);
+      setSelectedChat(null);
+      if (swipeableRef.current) {
+        swipeableRef.current.close();
+      }
+    } catch (error) {
+      console.error("Error deleting chat:", error);
+      Alert.alert("Error", "Failed to delete chat. Please try again.");
+    }
+  };
 
-          let recentMessage = item.recentMessage || "";
-          recentMessage = recentMessage.replace(/^.*?:\s/, "");
-
-          return (
-            <TouchableOpacity
-              className="flex-row items-center px-4 py-3 bg-white rounded-lg shadow-sm"
-              onPress={() => router.push({ pathname: "/message", params: { SessionID: item.$id, recipientName: chatTitle } })}
-            >
-              <Image
-                source={{ uri: item.PersonA.$id === user.$id ? item.PersonB.avatar : item.PersonA.avatar }}
-                className="w-12 h-12 rounded-full mr-4"
-              />
-              <View className="flex-1">
-                <Text className="text-lg font-bold">{chatTitle}</Text>
-                <Text className="text-gray-500 text-sm truncate">{recentMessage}</Text>
-              </View>
-              <Text className="text-gray-400 text-xs">{new Date(item.messageDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
-            </TouchableOpacity>
-          );
-        }}
-      />
-
+  const renderRightActions = (item) => {
+    return (
       <TouchableOpacity
-        className="absolute bottom-5 right-5 bg-purple-600 p-4 rounded-full shadow-lg"
+        className="bg-red-500 w-20 h-full justify-center items-center"
         onPress={() => {
-          fetchUsers();
-          setShowUserList(true);
+          setSelectedChat(item);
+          setDeleteModalVisible(true);
         }}
       >
-        <Image source={newMessageIcon} className="w-6 h-6 tint-white" />
+        <Ionicons name="trash-outline" size={24} color="white" />
       </TouchableOpacity>
+    );
+  };
 
-      <Modal visible={showUserList} transparent={true}>
-        <View className="flex-1 justify-center items-center bg-black/50">
-          <View className="bg-white p-5 rounded-xl w-4/5 shadow-lg">
-            <Text className="text-lg font-bold text-center text-gray-900 mb-4">Select a User</Text>
+  const MenuSection = ({ title, children }) => (
+    <Animated.View
+      style={{
+        opacity: fadeAnim,
+        transform: [{ translateY: slideAnim }],
+        marginBottom: 24,
+      }}
+    >
+      <Text style={{ 
+        fontSize: 14, 
+        fontWeight: '600', 
+        color: '#666', 
+        marginBottom: 8,
+        paddingHorizontal: 20,
+        textTransform: 'uppercase',
+        letterSpacing: 1
+      }}>
+        {title}
+      </Text>
+      <View style={{ 
+        backgroundColor: 'white', 
+        borderRadius: 16,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 3,
+      }}>
+        {children}
+      </View>
+    </Animated.View>
+  );
 
-            <TextInput
-              className="border border-gray-300 rounded-lg p-3 mb-3"
-              placeholder="Search users..."
-              value={searchText}
-              onChangeText={setSearchText}
-            />
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
+        <ScrollView>
+          <View style={{ padding: 16, paddingTop: 24 }}>
+            <Text style={{ 
+              fontSize: 24, 
+              fontWeight: 'bold', 
+              color: '#111827',
+              marginBottom: 24,
+              paddingHorizontal: 20
+            }}>
+              Messages
+            </Text>
 
-            <FlatList
-              data={users.filter(user => user.username.includes(searchText))}
-              keyExtractor={(item) => item.$id}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  className="py-3 border-b border-gray-200"
-                  onPress={() => startChat(item)}
-                >
-                  <Text className="text-base text-gray-800">{item.username}</Text>
-                </TouchableOpacity>
-              )}
-            />
+            <MenuSection title="Recent Conversations">
+              {chatSession?.map((item) => {
+                let chatTitle = item.title || "Unknown User";
+                chatTitle = chatTitle.replace(/https:\/\/cloud\.appwrite\.io\/v1\/avatars\/initials\?.*?&/, "").trim();
+                chatTitle = chatTitle.replace(/project=[^&]*&\s*/, "").trim();
 
-            <TouchableOpacity className="mt-4 bg-red-500 p-3 rounded-lg" onPress={() => setShowUserList(false)}>
-              <Text className="text-white text-center text-lg">Close</Text>
-            </TouchableOpacity>
+                let recentMessage = item.recentMessage || "";
+                recentMessage = recentMessage.replace(/^.*?:\s/, "");
+
+                return (
+                  <Swipeable
+                    key={item.$id}
+                    ref={swipeableRef}
+                    renderRightActions={() => renderRightActions(item)}
+                  >
+                    <TouchableOpacity
+                      onPress={() => router.push({ pathname: "/message", params: { SessionID: item.$id, recipientName: chatTitle } })}
+                      style={{ 
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        padding: 16,
+                        borderBottomWidth: 1,
+                        borderBottomColor: '#f0f0f0',
+                        backgroundColor: 'white'
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <View style={{ 
+                        width: 48, 
+                        height: 48, 
+                        borderRadius: 12,
+                        backgroundColor: '#F3F4F6',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginRight: 12,
+                        overflow: 'hidden'
+                      }}>
+                        <Image
+                          source={{ uri: item.PersonA.$id === user.$id ? item.PersonB.avatar : item.PersonA.avatar }}
+                          style={{ width: '100%', height: '100%', borderRadius: 12 }}
+                        />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ 
+                          fontSize: 16, 
+                          fontWeight: '600',
+                          color: '#1F2937'
+                        }}>
+                          {chatTitle}
+                        </Text>
+                        <Text style={{ 
+                          fontSize: 13, 
+                          color: '#6B7280', 
+                          marginTop: 2 
+                        }} numberOfLines={1}>
+                          {recentMessage}
+                        </Text>
+                      </View>
+                      <View style={{ alignItems: 'flex-end' }}>
+                        <Text style={{ 
+                          fontSize: 12, 
+                          color: '#9CA3AF'
+                        }}>
+                          {new Date(item.messageDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </Text>
+                        <View style={{ 
+                          width: 8, 
+                          height: 8, 
+                          borderRadius: 4, 
+                          backgroundColor: '#9902d3',
+                          marginTop: 4
+                        }} />
+                      </View>
+                    </TouchableOpacity>
+                  </Swipeable>
+                );
+              })}
+            </MenuSection>
           </View>
-        </View>
-      </Modal>
-    </SafeAreaView>
+        </ScrollView>
+
+        {/* Delete Confirmation Modal */}
+        <Modal
+          visible={deleteModalVisible}
+          transparent={true}
+          animationType="fade"
+        >
+          <View className="flex-1 justify-center items-center bg-black/50">
+            <View className="bg-white rounded-2xl p-6 w-[80%] max-w-sm">
+              <Text className="text-xl font-semibold text-gray-900 mb-4">Delete Conversation</Text>
+              <Text className="text-gray-600 mb-6">
+                Are you sure you want to delete this conversation? This action cannot be undone.
+              </Text>
+              <View className="flex-row justify-end space-x-4">
+                <TouchableOpacity
+                  onPress={() => {
+                    setDeleteModalVisible(false);
+                    setSelectedChat(null);
+                    if (swipeableRef.current) {
+                      swipeableRef.current.close();
+                    }
+                  }}
+                  className="px-4 py-2 rounded-xl bg-gray-100"
+                >
+                  <Text className="text-gray-600 font-medium">Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={handleDeleteChat}
+                  className="px-4 py-2 rounded-xl bg-red-500"
+                >
+                  <Text className="text-white font-medium">Delete</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        <TouchableOpacity
+          style={{
+            position: 'absolute',
+            bottom: 100,
+            right: 20,
+            backgroundColor: '#9902d3',
+            padding: 16,
+            borderRadius: 30,
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.2,
+            shadowRadius: 8,
+            elevation: 5,
+          }}
+          onPress={async () => {
+            await fetchUsers();
+            setShowUserList(true);
+          }}
+        >
+          <Image 
+            source={newMessageIcon} 
+            style={{ width: 24, height: 24, tintColor: '#ffffff' }}
+          />
+        </TouchableOpacity>
+
+        <Modal visible={showUserList} transparent={true} animationType="fade">
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+            <View style={{ 
+              backgroundColor: 'white',
+              padding: 20,
+              borderRadius: 16,
+              width: '80%',
+              maxHeight: '80%',
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.2,
+              shadowRadius: 8,
+              elevation: 5,
+            }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                <Text style={{ fontSize: 20, fontWeight: '600', color: '#1F2937' }}>Select a User</Text>
+                <TouchableOpacity onPress={() => setShowUserList(false)}>
+                  <Ionicons name="close-circle" size={24} color="#6B7280" />
+                </TouchableOpacity>
+              </View>
+
+              <View style={{ position: 'relative', marginBottom: 16 }}>
+                <Ionicons name="search" size={20} color="#9CA3AF" style={{ position: 'absolute', left: 12, top: 12 }} />
+                <TextInput
+                  style={{
+                    backgroundColor: '#F9FAFB',
+                    borderWidth: 1,
+                    borderColor: '#E5E7EB',
+                    borderRadius: 12,
+                    paddingLeft: 40,
+                    paddingRight: 16,
+                    paddingVertical: 12,
+                    color: '#1F2937',
+                  }}
+                  placeholder="Search users..."
+                  placeholderTextColor="#9CA3AF"
+                  value={searchText}
+                  onChangeText={setSearchText}
+                />
+              </View>
+
+              <FlatList
+                data={users.filter(user => user.username.toLowerCase().includes(searchText.toLowerCase()))}
+                keyExtractor={(item) => item.$id}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: 10 }}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      paddingVertical: 12,
+                      borderBottomWidth: 1,
+                      borderBottomColor: '#f0f0f0',
+                    }}
+                    onPress={() => startChat(item)}
+                  >
+                    <View style={{ 
+                      width: 40, 
+                      height: 40, 
+                      borderRadius: 12,
+                      backgroundColor: '#F3F4F6',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginRight: 12,
+                      overflow: 'hidden'
+                    }}>
+                      <Image
+                        source={{ uri: item.avatar }}
+                        style={{ width: '100%', height: '100%', borderRadius: 12 }}
+                      />
+                    </View>
+                    <Text style={{ fontSize: 16, fontWeight: '600', color: '#1F2937' }}>{item.username}</Text>
+                  </TouchableOpacity>
+                )}
+              />
+            </View>
+          </View>
+        </Modal>
+      </SafeAreaView>
+    </GestureHandlerRootView>
   );
 };
 

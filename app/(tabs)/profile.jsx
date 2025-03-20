@@ -226,12 +226,15 @@ const Profile = () => {
     <KeyboardAvoidingView 
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       className="flex-1 bg-white"
-      keyboardVerticalOffset={0}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       enabled
     >
       <ScrollView 
         className="flex-1" 
-        contentContainerStyle={{flexGrow: 1}}
+        contentContainerStyle={{
+          flexGrow: 1,
+          paddingBottom: Platform.OS === 'ios' ? 90 : 20
+        }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
@@ -239,7 +242,7 @@ const Profile = () => {
       >
         <SafeAreaView className="relative">
           <Animated.View 
-            className="relative h-[260px] -mt-14"
+            className="relative h-[260px] -mt-20"
             style={{ opacity: fadeAnim }}
           >
             <TouchableOpacity 
@@ -388,7 +391,9 @@ const Profile = () => {
                     selectionColor="#3b82f6"
                   />
                 ) : (
-                  <Text className="font-pregular text-base ml-2 bg-white px-4 py-2 rounded-xl text-gray-600 shadow-sm">{major}</Text>
+                  <Text className="font-pregular text-base ml-2 bg-white px-4 py-2 rounded-xl text-gray-600 shadow-sm" numberOfLines={1} ellipsizeMode="tail">
+                    {major}
+                  </Text>
                 )}
               </View>
 
@@ -404,7 +409,9 @@ const Profile = () => {
                     selectionColor="#3b82f6"
                   />
                 ) : (
-                  <Text className="font-pregular text-base ml-2 bg-white px-4 py-2 rounded-xl text-gray-600 shadow-sm">{career}</Text>
+                  <Text className="font-pregular text-base ml-2 bg-white px-4 py-2 rounded-xl text-gray-600 shadow-sm" numberOfLines={1} ellipsizeMode="tail">
+                    {career}
+                  </Text>
                 )}
               </View>
 
@@ -415,6 +422,9 @@ const Profile = () => {
                     <Text 
                       className="font-pregular text-base bg-white px-4 py-2 rounded-xl text-gray-600 shadow-sm" 
                       key={item.$id}
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                      style={{ maxWidth: '45%' }}
                     >
                       {item.interest_name}
                     </Text>
