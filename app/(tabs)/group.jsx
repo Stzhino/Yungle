@@ -1,151 +1,146 @@
 import { SafeAreaView, View, Text, FlatList, TouchableOpacity, Modal, Image, TextInput } from 'react-native';
-import React, { useEffect, useState } from 'react';
-import SearchInput from '../../components/Searchinput';
-import { getChatSession, getMessages } from '../../lib/appwrite';
-import useAppwrite from '../../lib/useAppwrite';
-import ChatSession from '@/components/ChatSession';
-import { useGlobalContext } from '../../context/GlobalProvider';
-import { createNotification } from '../../lib/appwrite';
-const filterIcon = require('../../assets/icons/filter.png');
-const searchIcon = require('../../assets/icons/search.png');
+import React, { useState, useEffect } from 'react';
+import { useGlobalContext } from "@/context/GlobalProvider";
+import { getChatSession, getUsers, createChatSession } from "../../lib/appwrite";
+import useAppwrite from "../../lib/useAppwrite";
+import ChatSession from "@/components/ChatSession";
+import { useRouter } from "expo-router";
 
-const filterOptions = [
-  { id: '1', label: 'Most Recent' },
-  { id: '2', label: 'Most Active' },
-  { id: '3', label: 'My Favorites' },
-  { id: '4', label: 'Hidden' }
-];
+const newMessageIcon = require('../../assets/icons/new-message.png');
 
 const Group = () => {
   const { data: chatSession, refetch } = useAppwrite(getChatSession);
-  const { user, setUser, setIsLogged } = useGlobalContext();
-  const [filterModalVisible, setFilterModalVisible] = useState(false);
-  const [selectedFilters, setSelectedFilters] = useState([]);
+  const { user } = useGlobalContext();
+  const [showUserList, setShowUserList] = useState(false);
   const [searchText, setSearchText] = useState('');
-  const toggleFilter = (filter) => {
-    setSelectedFilters((prevFilters) =>
-      prevFilters.includes(filter)
-        ? prevFilters.filter((item) => item !== filter)
-        : [...prevFilters, filter]
-    );
+  const [users, setUsers] = useState([]);
+  const router = useRouter();
+
+  const fetchUsers = async () => {
+    try {
+      const allUsers = await getUsers();
+      setUsers(allUsers);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+    }
+  };
+
+  const startChat = async (selectedUser) => {
+    try {
+      let chatExists = chatSession.find(session =>
+        (session.PersonA === user.$id && session.PersonB === selectedUser.$id) ||
+        (session.PersonB === user.$id && session.PersonA === selectedUser.$id)
+      );
+
+      if (!chatExists) {
+        chatExists = await createChatSession(
+          user.$id,
+          selectedUser.$id,
+          user.username,
+          selectedUser.username
+        );
+        refetch();
+      } else {
+        console.log("Chat session already exists:", chatExists);
+      }
+
+      setShowUserList(false);
+
+      console.log("Navigating to message screen with:", {
+        SessionID: chatExists.$id,
+        recipientName: selectedUser.username
+      });
+
+      router.push({
+        pathname: "/message",
+        params: {
+          SessionID: chatExists.$id,
+          recipientName: selectedUser.username
+        }
+      });
+
+    } catch (error) {
+      console.error("Error starting new chat session:", error);
+    }
   };
 
   return (
-    <SafeAreaView className="h-full bg-white">
-      <View className="my-4 px-4">
-        <View className="flex-row items-center bg-gray-100 p-3 rounded-full">
-          <Image source={searchIcon} style={{ width: 18, height: 18, marginRight: 8 }} />
-          <TextInput
-            placeholder="Search"
-            placeholderTextColor="#8E8E93"
-            value={searchText}
-            onChangeText={setSearchText}
-            className="flex-1 text-base text-gray-900"
-          />
-          <TouchableOpacity
-            onPress={() => setFilterModalVisible(true)}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              paddingVertical: 8,
-              paddingHorizontal: 12,
-              backgroundColor: '#E5E7EB',
-              borderRadius: 20,
-              marginLeft: 10
-            }}
-          >
-            <Image source={filterIcon} style={{ width: 20, height: 20, marginRight: 6 }} />
-            <Text style={{ fontSize: 14, color: '#6B7280' }}>Filter</Text>
-          </TouchableOpacity>
-        </View>
+    <SafeAreaView className="flex-1 bg-gray-100">
+      <View className="px-4 pt-6">
+        <Text className="text-2xl font-bold text-gray-900 mb-4">Messages</Text>
       </View>
 
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={filterModalVisible}
-        onRequestClose={() => setFilterModalVisible(false)}
-      >
-        <View className="flex-1 justify-center items-center" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}>
-          <View
-            style={{
-              backgroundColor: 'white',
-              padding: 20,
-              borderRadius: 15,
-              width: '80%',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.3,
-              shadowRadius: 6,
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 18,
-                fontWeight: 'bold',
-                color: 'black',
-                textAlign: 'center',
-                marginBottom: 10,
-              }}
-            >
-              Select Filters
-            </Text>
+      <FlatList
+        data={chatSession}
+        keyExtractor={(item) => item.$id}
+        renderItem={({ item }) => {
+          let chatTitle = item.title || "Unknown User";
+          chatTitle = chatTitle.replace(/https:\/\/cloud\.appwrite\.io\/v1\/avatars\/initials\?.*?&/, "").trim();
+          chatTitle = chatTitle.replace(/project=[^&]*&\s*/, "").trim();
 
-            <View
-              style={{
-                borderBottomWidth: 2,
-                borderBottomColor: 'black',
-                width: '100%',
-                marginBottom: 15,
-              }}
+          let recentMessage = item.recentMessage || "";
+          recentMessage = recentMessage.replace(/^.*?:\s/, "");
+
+          return (
+            <TouchableOpacity
+              className="flex-row items-center px-4 py-3 bg-white rounded-lg shadow-sm"
+              onPress={() => router.push({ pathname: "/message", params: { SessionID: item.$id, recipientName: chatTitle } })}
+            >
+              <Image
+                source={{ uri: item.PersonA.$id === user.$id ? item.PersonB.avatar : item.PersonA.avatar }}
+                className="w-12 h-12 rounded-full mr-4"
+              />
+              <View className="flex-1">
+                <Text className="text-lg font-bold">{chatTitle}</Text>
+                <Text className="text-gray-500 text-sm truncate">{recentMessage}</Text>
+              </View>
+              <Text className="text-gray-400 text-xs">{new Date(item.messageDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
+            </TouchableOpacity>
+          );
+        }}
+      />
+
+      <TouchableOpacity
+        className="absolute bottom-5 right-5 bg-purple-600 p-4 rounded-full shadow-lg"
+        onPress={() => {
+          fetchUsers();
+          setShowUserList(true);
+        }}
+      >
+        <Image source={newMessageIcon} className="w-6 h-6 tint-white" />
+      </TouchableOpacity>
+
+      <Modal visible={showUserList} transparent={true}>
+        <View className="flex-1 justify-center items-center bg-black/50">
+          <View className="bg-white p-5 rounded-xl w-4/5 shadow-lg">
+            <Text className="text-lg font-bold text-center text-gray-900 mb-4">Select a User</Text>
+
+            <TextInput
+              className="border border-gray-300 rounded-lg p-3 mb-3"
+              placeholder="Search users..."
+              value={searchText}
+              onChangeText={setSearchText}
             />
 
-            {filterOptions.map((option) => (
-              <TouchableOpacity
-                key={option.id}
-                style={{
-                  paddingVertical: 12,
-                  paddingHorizontal: 16,
-                  backgroundColor: selectedFilters.includes(option.label) ? '#8B5CF6' : '#E5E7EB',
-                  borderRadius: 10,
-                  marginVertical: 8,
-                }}
-                onPress={() => toggleFilter(option.label)}
-              >
-                <Text
-                  style={{
-                    fontSize: 16,
-                    color: selectedFilters.includes(option.label) ? 'white' : 'black',
-                    textAlign: 'center',
-                  }}
+            <FlatList
+              data={users.filter(user => user.username.includes(searchText))}
+              keyExtractor={(item) => item.$id}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  className="py-3 border-b border-gray-200"
+                  onPress={() => startChat(item)}
                 >
-                  {option.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                  <Text className="text-base text-gray-800">{item.username}</Text>
+                </TouchableOpacity>
+              )}
+            />
 
-            <TouchableOpacity
-              style={{
-                marginTop: 16,
-                padding: 12,
-                backgroundColor: '#EF4444',
-                borderRadius: 10,
-              }}
-              onPress={() => setFilterModalVisible(false)}
-            >
+            <TouchableOpacity className="mt-4 bg-red-500 p-3 rounded-lg" onPress={() => setShowUserList(false)}>
               <Text className="text-white text-center text-lg">Close</Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
-
-      <FlatList
-        data={chatSession}
-        keyExtractor={(item) => item.$id}
-        renderItem={({ item }) => (
-          <ChatSession session={item} />
-        )}
-      />
     </SafeAreaView>
   );
 };
