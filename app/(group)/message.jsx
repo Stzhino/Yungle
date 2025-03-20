@@ -1,74 +1,171 @@
-import { useGlobalContext } from "../../context/GlobalProvider"
-import { useLocalSearchParams, useRouter } from "expo-router"
-import useAppwrite from "../../lib/useAppwrite"
-import MessageBubble from "../../components/MessageBubble"
-import { getMessages } from "../../lib/appwrite"
-import icons from "../../constants/icons"
-import SearchBar from "../../components/SearchBar"
-import KeyboardMover from "../../components/KeyboardMover"
-import { KeyboardAwareFlatList } from "react-native-keyboard-aware-scroll-view"
-import { View,Text,ActivityIndicator,FlatList,TextInput, TouchableOpacity,Image,Platform,KeyboardAvoidingView } from "react-native"
-import { useState,useEffect,useRef } from "react"
-const message = ()=>{
-   const {SessionID} = useLocalSearchParams()
-   const[isLoading,setIsLoading]= useState(true);
-    const {data:messages,refetch}=useAppwrite(()=>getMessages(SessionID))
-     const { user, setUser, setIsLogged } = useGlobalContext();
-     const previousUserRef=useRef(null);
-     const flatListRef = useRef(null);
-     const[showSubmit, setShowSubmit] =useState(false);
-     const[userMessage,setUserMessage]=useState("")
-     previousUserRef.current=null;
-     const messageFunct=(e)=>{
-    setUserMessage(e)
-     }
-     useEffect(()=>{
-      if((messages!=null)&&(messages.length>0)&&(isLoading==true))
-      {
+import { useGlobalContext } from "../../context/GlobalProvider";
+import { useLocalSearchParams } from "expo-router";
+import useAppwrite from "../../lib/useAppwrite";
+import { getMessages, createMessage } from "../../lib/appwrite";
+import { View, Text, ActivityIndicator, FlatList, TextInput, TouchableOpacity, Image } from "react-native";
+import { useState, useEffect, useRef } from "react";
+import { useNavigation } from "@react-navigation/native";
+import Constants from "expo-constants";
+
+const MessageScreen = () => {
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    navigation.setOptions({ headerShown: false });
+  }, [navigation]);
+
+  const { SessionID } = useLocalSearchParams();
+  const [isLoading, setIsLoading] = useState(true);
+  const { data: messages, refetch } = useAppwrite(() => getMessages(SessionID));
+  const { user } = useGlobalContext();
+  const [userMessage, setUserMessage] = useState("");
+  const [chatMessages, setChatMessages] = useState([]);
+  const flatListRef = useRef(null);
+  const [recipient, setRecipient] = useState(null);
+
+  useEffect(() => {
+    if (!SessionID) {
+      console.error("SessionID is missing");
+      return;
+    }
+
+    if (messages && messages.length > 0 && isLoading) {
+      setChatMessages(messages);
       setIsLoading(false);
+      scrollToBottom();
+
+      // Identify the recipient in the chat session
+      const chatSession = messages[0]?.sessionID;
+      if (chatSession) {
+        const otherUser = chatSession.PersonA?.$id === user?.$id ? chatSession.PersonB : chatSession.PersonA;
+        setRecipient(otherUser);
       }
-     },[messages])
-return (<KeyboardAvoidingView
-  behavior={Platform.OS === "ios" ? "padding" : "height"} 
-  keyboardVerticalOffset={Platform.OS === "ios" ? 60:0}
-  style={{ flex: 1 }}
->
-<View className="flex-1 items-center bg-white">
-  {isLoading==true?
-  (<ActivityIndicator size="large" color="#0000ff"/>
-  ):(
-<View className="flex-1 bg-purple-500">
-  <View className="w-full h-[80%] ">
-    <FlatList
-    ref={flatListRef}
-    data={messages}
-    keyExtractor={(item, index) => index.toString()}
-    renderItem={({ item }) => {
-      const isConsecutiveMessage = previousUserRef.current?.sender.username==item.sender.username
-      console.log(isConsecutiveMessage);
-      previousUserRef.current=item
-    return <MessageBubble message={item} isConsecutive={isConsecutiveMessage}/>
-  }} className='w-[90%]'/>
-  </View>
-  <View className="w-[90%] h-[8%] flex-row mt-4 flex-row items-center bg-[#F0F0F0] border-2 border-[#E0E0E0] p-1 rounded-2xl">
-    <TextInput 
-      className=" text-[16px] font-pregular flex-1"
-      onChangeText={(e)=>{messageFunct(e)}}
-      value={userMessage}
-      placeholder="Enter an message"
-      onFocus={()=>setShowSubmit(true)}
-      onBlur={()=>{setShowSubmit(false)}}
-       />
-       <TouchableOpacity style={{opacity:showSubmit?1:0}}onPress={()=>{}}>
-           <Image
-              source = {icons.search}
-              className='w-6 h-6'
-              resizeMode='contain'
-                      />
-       </TouchableOpacity>
-  </View>
-</View>
-)}
-  </View></KeyboardAvoidingView>)
-}
-export default message
+    }
+  }, [messages]);
+
+  const sendMessage = async () => {
+    if (!userMessage.trim()) return;
+    if (!user || !user.$id) return;
+
+    try {
+      const newMessage = await createMessage(SessionID, userMessage);
+      setUserMessage("");
+      setChatMessages((prevMessages) => [...prevMessages, newMessage]);
+      refetch();
+      scrollToBottom();
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
+  };
+
+  const scrollToBottom = () => {
+    setTimeout(() => {
+      if (flatListRef.current) {
+        flatListRef.current.scrollToEnd({ animated: true });
+      }
+    }, 100);
+  };
+
+  return (
+    <View className="flex-1 bg-white">
+      <View style={{
+        paddingTop: Constants.statusBarHeight + 8,
+        backgroundColor: "white",
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: 16,
+        paddingBottom: 15,
+        borderBottomWidth: 1,
+        borderBottomColor: "#ddd"
+      }}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Text className="text-blue-500 text-lg">Back</Text>
+        </TouchableOpacity>
+
+        {recipient && (
+          <View className="flex-row items-center ml-4">
+            <Image
+              source={{ uri: recipient.avatar }}
+              className="w-8 h-8 rounded-full mr-2"
+            />
+            <Text className="text-lg font-semibold">{recipient.username}</Text>
+          </View>
+        )}
+      </View>
+
+      {isLoading ? (
+        <ActivityIndicator size="large" color="#7C3AED" className="mt-10" />
+      ) : (
+        <View className="flex-1 bg-gray-100 px-4 py-2">
+          {/* Messages List */}
+          <FlatList
+            data={chatMessages}
+            keyExtractor={(item, index) => item?.$id ?? index.toString()}
+            renderItem={({ item }) => {
+              if (!item?.Message) {
+                console.log("Message missing:", item);
+                return null;
+              }
+              const isCurrentUser = item.sender?.$id === user?.$id;
+              return (
+                <View className={`flex-row ${isCurrentUser ? "justify-end" : "justify-start"} my-2 items-center`}>
+
+                  {!isCurrentUser && item.sender.avatar && (
+                    <Image
+                      source={{ uri: item.sender.avatar }}
+                      className="w-8 h-8 rounded-full mr-2"
+                    />
+                  )}
+
+                  <View
+                    style={{
+                      padding: 10,
+                      maxWidth: "75%",
+                      borderRadius: 20,
+                      backgroundColor: isCurrentUser ? "#7C3AED" : "#E5E7EB",
+                      alignSelf: isCurrentUser ? "flex-end" : "flex-start",
+                    }}
+                  >
+                    <Text style={{ color: isCurrentUser ? "white" : "black", fontSize: 15 }}>
+                      {item.Message}
+                    </Text>
+                  </View>
+
+                  {isCurrentUser && user.avatar && (
+                    <Image
+                      source={{ uri: user.avatar }}
+                      className="w-8 h-8 rounded-full ml-2"
+                    />
+                  )}
+                </View>
+              );
+            }}
+            contentContainerStyle={{ paddingBottom: 80 }}
+            onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+          />
+
+          {/* Message Input Box */}
+          <View className="absolute bottom-2 left-0 right-0 bg-white px-3 py-2 border-t border-gray-300">
+            <View className="flex-row bg-gray-200 rounded-full px-4 py-2 items-center mx-3">
+              <TextInput
+                className="flex-1 text-[16px] py-2"
+                placeholder="Message here..."
+                value={userMessage}
+                onChangeText={(text) => setUserMessage(text)}
+              />
+              <TouchableOpacity
+                className="bg-purple-500 w-10 h-10 rounded-full flex items-center justify-center ml-2"
+                onPress={sendMessage}
+              >
+                <Image source={require("../../assets/icons/send.png")} className="w-6 h-6 tint-white" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
+    </View>
+  );
+};
+
+export default MessageScreen;
+

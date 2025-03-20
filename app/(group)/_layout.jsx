@@ -1,17 +1,23 @@
 
 import { Stack } from "expo-router"
-const GroupLayout=()=>{
-return <Stack
-screenOptions={{
-    headerShown: false
-  }}>
-    <Stack.Screen 
-    name="message" 
-    options={{
-        header: () => null// Optionally, you can explicitly set the title to an empty string to prevent the folder name from showing up
-      }}
-    />
-</Stack>
+import { useNavigation } from "@react-navigation/native";
+import { useEffect } from "react";
+
+const GroupLayout = () => {
+    const navigation = useNavigation();
+    useEffect(() => {
+        navigation.setOptions({ headerShown: false });
+    }, [navigation]);
+    return (
+        <Stack>
+            <Stack.Screen
+                name="message"
+                options={{
+                    headerShown: false
+                }}
+            />
+        </Stack>
+    )
 }
 
 export default GroupLayout
