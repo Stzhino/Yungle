@@ -90,7 +90,7 @@ const Group = () => {
             >
               Select Filters
             </Text>
-            
+
             <View
               style={{
                 borderBottomWidth: 2,
@@ -142,7 +142,7 @@ const Group = () => {
       <FlatList
         data={chatSession}
         keyExtractor={(item) => item.$id}
-        renderItem={({ item }) =>  (
+        renderItem={({ item }) => (
           <ChatSession session={item} />
         )}
       />

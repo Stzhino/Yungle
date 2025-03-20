@@ -1,30 +1,36 @@
-import { useGlobalContext } from "../../context/GlobalProvider"
-import { useLocalSearchParams, useRouter } from "expo-router"
-import useAppwrite from "../../lib/useAppwrite"
-import MessageBubble from "../../components/MessageBubble"
-import { getMessages } from "../../lib/appwrite"
-import icons from "../../constants/icons"
-import SearchBar from "../../components/SearchBar"
-import KeyboardMover from "../../components/KeyboardMover"
-import { KeyboardAwareFlatList } from "react-native-keyboard-aware-scroll-view"
-import { View,Text,ActivityIndicator,FlatList,TextInput, TouchableOpacity,Image,Platform,KeyboardAvoidingView } from "react-native"
-import { useState,useEffect,useRef } from "react"
-const message = ()=>{
-   const {SessionID} = useLocalSearchParams()
-   const[isLoading,setIsLoading]= useState(true);
-    const {data:messages,refetch}=useAppwrite(()=>getMessages(SessionID))
-     const { user, setUser, setIsLogged } = useGlobalContext();
-     const previousUserRef=useRef(null);
-     const flatListRef = useRef(null);
-     const[showSubmit, setShowSubmit] =useState(false);
-     const[userMessage,setUserMessage]=useState("")
-     previousUserRef.current=null;
-     const messageFunct=(e)=>{
-    setUserMessage(e)
-     }
-     useEffect(()=>{
-      if((messages!=null)&&(messages.length>0)&&(isLoading==true))
-      {
+import { useGlobalContext } from "../../context/GlobalProvider";
+import { useLocalSearchParams } from "expo-router";
+import useAppwrite from "../../lib/useAppwrite";
+import { getMessages, createMessage } from "../../lib/appwrite";
+import { View, Text, ActivityIndicator, FlatList, TextInput, TouchableOpacity, Image } from "react-native";
+import { useState, useEffect, useRef } from "react";
+import { useNavigation } from "@react-navigation/native";
+import Constants from "expo-constants";
+
+const MessageScreen = () => {
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    navigation.setOptions({ headerShown: false });
+  }, [navigation]);
+
+  const { SessionID } = useLocalSearchParams();
+  const [isLoading, setIsLoading] = useState(true);
+  const { data: messages, refetch } = useAppwrite(() => getMessages(SessionID));
+  const { user } = useGlobalContext();
+  const [userMessage, setUserMessage] = useState("");
+  const [chatMessages, setChatMessages] = useState([]);
+  const flatListRef = useRef(null);
+  const [recipient, setRecipient] = useState(null);
+
+  useEffect(() => {
+    if (!SessionID) {
+      console.error("SessionID is missing");
+      return;
+    }
+
+    if (messages && messages.length > 0 && isLoading) {
+      setChatMessages(messages);
       setIsLoading(false);
       }
      },[messages])
@@ -35,8 +41,7 @@ return (<KeyboardAvoidingView
 >
 <View className="flex-1 items-center bg-white">
   {isLoading==true?
-  (
-  <View className="flex-1 item-center justify-center"><ActivityIndicator size="large" color="#0000ff"/></View>
+  (<ActivityIndicator size="large" color="#0000ff"/>
   ):(
 <View className="flex-1 bg-purple-500">
   <View className="w-full h-[80%] ">
@@ -49,7 +54,7 @@ return (<KeyboardAvoidingView
       console.log(isConsecutiveMessage);
       previousUserRef.current=item
     return <MessageBubble message={item} isConsecutive={isConsecutiveMessage}/>
-  }} className='w-[90%] mt-20'/>
+  }} className='w-[90%]'/>
   </View>
   <View className="w-[90%] h-[8%] flex-row mt-4 flex-row items-center bg-[#F0F0F0] border-2 border-[#E0E0E0] p-1 rounded-2xl">
     <TextInput 
