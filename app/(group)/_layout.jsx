@@ -1,12 +1,15 @@
 
 import { Stack } from "expo-router"
 const GroupLayout=()=>{
-return <Stack>
+return <Stack
+screenOptions={{
+    headerShown: false
+  }}>
     <Stack.Screen 
     name="message" 
     options={{
-        headerShown:false
-        }} 
+        header: () => null// Optionally, you can explicitly set the title to an empty string to prevent the folder name from showing up
+      }}
     />
 </Stack>
 }
