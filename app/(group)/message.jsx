@@ -2,6 +2,7 @@ import { useGlobalContext } from "../../context/GlobalProvider";
 import { useLocalSearchParams } from "expo-router";
 import useAppwrite from "../../lib/useAppwrite";
 import { getMessages, createMessage } from "../../lib/appwrite";
+import icons from "../../constants/icons"
 import { View, Text, ActivityIndicator, FlatList, TextInput, TouchableOpacity, Image } from "react-native";
 import { useState, useEffect, useRef } from "react";
 import { useNavigation } from "@react-navigation/native";
