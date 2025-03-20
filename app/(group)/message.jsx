@@ -3,11 +3,12 @@ import { useLocalSearchParams } from "expo-router";
 import useAppwrite from "../../lib/useAppwrite";
 import { getMessages, createMessage } from "../../lib/appwrite";
 import icons from "../../constants/icons"
-import { View, Text, ActivityIndicator, FlatList, TextInput, TouchableOpacity, Image, Animated, Platform } from "react-native";
+import { View, Text, ActivityIndicator, FlatList, TextInput,Keyboard, TouchableOpacity, Image, Animated, Platform } from "react-native";
 import { useState, useEffect, useRef } from "react";
 import { useNavigation } from "@react-navigation/native";
 import Constants from "expo-constants";
 import { LinearGradient } from 'expo-linear-gradient';
+import { KeyboardAvoidingView } from "react-native";
 import MessageBubble from "../../components/MessageBubble";
 
 const MessageScreen = () => {
@@ -42,6 +43,11 @@ const MessageScreen = () => {
     if (messages && messages.length > 0) {
       setChatMessages(messages);
       setIsLoading(false);
+      const keyboardShowListener=Keyboard.addListener(
+        'keyboardDidShow',
+      () => {
+        scrollToBottom();
+        })
       scrollToBottom();
     } else if (!isFetching) {
       setIsLoading(false);
@@ -137,6 +143,11 @@ const MessageScreen = () => {
   };
 
   return (
+    <KeyboardAvoidingView 
+    className="flex-1"
+    behavior={Platform.OS == 'ios' ? 'padding' : 'height'}
+    keyboardVerticalOffset={Platform.OS == 'ios' ? 40 : 0}
+    >
     <View className="flex-1 bg-white">
       {/* Header */}
       <Animated.View 
@@ -230,6 +241,7 @@ const MessageScreen = () => {
         </View>
       </View>
     </View>
+    </KeyboardAvoidingView>
   );
 };
 
