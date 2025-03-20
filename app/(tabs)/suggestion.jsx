@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react'
 import SearchInput from '../../components/Searchinput'
 import icons from '../../constants/icons'
 import EmptyState from '../../components/EmptyState'
-import { getUsers, getInterest, getRecommendations } from '../../lib/appwrite'
+import { getUsers, getInterest, getRecommendationsAll, getRecommendations } from '../../lib/appwrite'
 import useAppwrite from '../../lib/useAppwrite'
 import ProfileCards from '../../components/ProfileCards'
 
@@ -14,12 +14,18 @@ const Suggestion = () => {
   const [realEstate, setRealEstate] = useState(false);
   const [fashion, setFashion] = useState(false);
 
+  // unfiltered
+  // const { data: users, isLoading: isLoadingUsers, refetch: refetch } = useAppwrite(() => getRecommendationsALL());
+  // const { data: DEIUsers, isLoading: isLoadingDEI, refetch: refetchDEI } = useAppwrite(() => getRecommendations("DEI"))
+  // const { data: HikingUsers, isLoading: isLoadingHiking, refetch: refetchHiking } = useAppwrite(() => getRecommendations("Hiking"))
+  // const { data: REUsers, isLoading: isLoadingRE, refetch: refetchRE } = useAppwrite(() => getRecommendations("Real Estate"))
+  // const { data: FashionUsers, isLoading: isLoadingFashion, refetch: refetchFashion } = useAppwrite(() => getRecommendations("Fashion"))
   const { data: users, isLoading: isLoadingUsers, refetch: refetch } = useAppwrite(getUsers);
-  const { data: DEIUsers, isLoading: isLoadingDEI, refetch: refetchDEI } = useAppwrite(() => getInterest("DEI"))
-  const { data: HikingUsers, isLoading: isLoadingHiking, refetch: refetchHiking } = useAppwrite(() => getInterest("Hiking"))
-  const { data: REUsers, isLoading: isLoadingRE, refetch: refetchRE } = useAppwrite(() => getInterest("Real Estate"))
-  const { data: FashionUsers, isLoading: isLoadingFashion, refetch: refetchFashion } = useAppwrite(() => getInterest("Fashion"))
-  const { data: reccs, isLoading: isLoadingReccs, refetch: refetchReccs } = useAppwrite(() => getRecommendations())
+  const { data: DEIUsers, isLoading: isLoadingDEI, refetch: refetchDEI } = useAppwrite(() => getRecommendations("DEI"))
+  const { data: HikingUsers, isLoading: isLoadingHiking, refetch: refetchHiking } = useAppwrite(() => getRecommendations("Hiking"))
+  const { data: REUsers, isLoading: isLoadingRE, refetch: refetchRE } = useAppwrite(() => getRecommendations("Real Estate"))
+  const { data: FashionUsers, isLoading: isLoadingFashion, refetch: refetchFashion } = useAppwrite(() => getRecommendations("Fashion"))
+  const { data: reccs, isLoading: isLoadingReccs, refetch: refetchReccs } = useAppwrite(() => getRecommendationsAll())
 
   const [info, setInfo] = useState([]);
   useEffect(() => {
@@ -33,7 +39,7 @@ const Suggestion = () => {
       setInfo(HikingUsers);
     }
     else if (fashion) {
-      setInfo(fashion);
+      setInfo(FashionUsers);
     }
     else if (realEstate) {
       setInfo(REUsers);
@@ -49,6 +55,7 @@ const Suggestion = () => {
     await refetchRE();
     await refetchHiking();
     await refetchReccs();
+
     console.log(users);
     setRefreshing(false);
   }

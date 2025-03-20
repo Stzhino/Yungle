@@ -10,11 +10,11 @@ export default function NotificationBox({ Notification }) {
   const requestUpdate = async(sender, wasAccepted) => {
     try{
       if(Loading){
-        await updateConnection(sender, wasAccepted)
+        await updateConnection(sender.username, wasAccepted)
         console.log("connection updated")
       }
       setLoading(false)
-      await updateNotif(sender, wasAccepted)
+      await updateNotif(sender.$id, wasAccepted)
       console.log("notif updated")
       setLoading(true)
     }
@@ -33,13 +33,13 @@ export default function NotificationBox({ Notification }) {
           <View className="mt-[2px]">
             <Text className="text-[12px] font-pregular">{description}</Text>
           </View>
-          <Text className="text-[10px] font-pregular text-gray-500 mt-[8px]">{timeDifference} {label}</Text>
+          <Text className="text-[10px] font-pregular text-gray-500 mt-[8px]">{timeDifference}</Text>
         </View>
         <View className="flex-row mr-2 w-[30%]">
-          <TouchableOpacity onPress={()=>requestUpdate(sender.username,true)}>
+          <TouchableOpacity onPress={()=>requestUpdate(sender,true)}>
             <Image source={icons.check} className="w-14 h-14 mb-2 bg-primary p-2 mr-2 rounded-full" resizeMode='contain'/>
           </TouchableOpacity>
-          <TouchableOpacity onPress={()=>requestUpdate(sender.username,false)}>
+          <TouchableOpacity onPress={()=>requestUpdate(sender,false)}>
             <Image source={icons.close} className="w-14 h-14 mb-2 bg-gray-200 p-3 rounded-full" resizeMode='contain'/>
           </TouchableOpacity>
         </View>
