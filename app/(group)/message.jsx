@@ -35,7 +35,8 @@ return (<KeyboardAvoidingView
 >
 <View className="flex-1 items-center bg-white">
   {isLoading==true?
-  (<ActivityIndicator size="large" color="#0000ff"/>
+  (
+  <View className="flex-1 item-center justify-center"><ActivityIndicator size="large" color="#0000ff"/></View>
   ):(
 <View className="flex-1 bg-purple-500">
   <View className="w-full h-[80%] ">
@@ -48,7 +49,7 @@ return (<KeyboardAvoidingView
       console.log(isConsecutiveMessage);
       previousUserRef.current=item
     return <MessageBubble message={item} isConsecutive={isConsecutiveMessage}/>
-  }} className='w-[90%]'/>
+  }} className='w-[90%] mt-20'/>
   </View>
   <View className="w-[90%] h-[8%] flex-row mt-4 flex-row items-center bg-[#F0F0F0] border-2 border-[#E0E0E0] p-1 rounded-2xl">
     <TextInput 
