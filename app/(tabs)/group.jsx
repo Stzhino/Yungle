@@ -1,5 +1,6 @@
 import { SafeAreaView, View, Text, FlatList, TouchableOpacity, Modal, Image, TextInput, Animated, ScrollView, Alert } from 'react-native';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef,useCallback } from 'react';
+import { useFocusEffect } from 'expo-router';
 import { useGlobalContext } from "@/context/GlobalProvider";
 import { getChatSession, getUsers, createChatSession, deleteChatSession } from "../../lib/appwrite";
 import useAppwrite from "../../lib/useAppwrite";
@@ -8,6 +9,7 @@ import { useRouter } from "expo-router";
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { GestureHandlerRootView, Swipeable } from 'react-native-gesture-handler';
+import {client,appwriteConfig} from "../../lib/appwrite";
 
 const newMessageIcon = require('../../assets/icons/new-message.png');
 
@@ -21,12 +23,28 @@ const Group = () => {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [selectedChat, setSelectedChat] = useState(null);
   let swipeableRef = useRef(null);
-
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current;
   const headerScale = useRef(new Animated.Value(0.95)).current;
-
+  const path=`databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.chatSessionId}.documents`;
+  useEffect(()=>{
+    const subscribeSession= client.subscribe(path,(response)=>{
+     const eventType=response.events[0];
+     console.log("realtime work");
+      if(eventType.includes("create")) {
+        // Log when a new file is uploaded
+        console.log("create");
+        refetch();
+      }
+      if(eventType.includes("update"))
+      {
+        console.log("update");
+        refetch();
+      }
+    })
+    return subscribeSession
+  },[])
   useEffect(() => {
     Animated.parallel([
       Animated.timing(fadeAnim, {
