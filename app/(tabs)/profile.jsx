@@ -5,7 +5,7 @@ import { useGlobalContext } from '../../context/GlobalProvider'
 import images from '../../constants/images'
 import { useState } from 'react'
 import icons from "../../constants/icons"
-import { updateUser, getCurrentUser, createLabel, getUserPhotos, createImagePost } from '../../lib/appwrite'
+import { updateUser, getCurrentUser, createLabel, getUserPhotos, createImagePost, fetchFriends } from '../../lib/appwrite'
 import useAppwrite from '../../lib/useAppwrite'
 import { Ionicons } from '@expo/vector-icons'
 import * as ImagePicker from 'expo-image-picker'
@@ -36,7 +36,8 @@ const Profile = () => {
         Alert.alert('Sorry, we need camera roll permissions to make this work!');
       }
     })();
-
+    
+    // const { data: friendList, isLoading: isLoadingFriends, refetch: refetchFriends } = useAppwrite(() => fetchFriends)
     // Fade in animation
     Animated.parallel([
       Animated.timing(fadeAnim, {
@@ -52,6 +53,11 @@ const Profile = () => {
     ]).start();
   }, []);
 
+  async function getFriends(){
+    let friendList = await fetchFriends();
+    return friendList.length;
+  }
+  const numFriends = getFriends();
   if (!user) {
     return (
       <View className="flex-1 items-center justify-center">
@@ -333,6 +339,7 @@ const Profile = () => {
           ) : (
             <Text className="text-gray-600 text-base mt-1">{location}</Text>
           )}
+          <Text href="/Menu/universityhub">{numFriends} Friends</Text>
         </Animated.View>
 
         {/* Education Section */}
