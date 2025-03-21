@@ -163,14 +163,6 @@ const Menu = () => {
             />
           </MenuSection>
 
-          <MenuSection title="Privacy">
-            <MenuItem 
-              title="Blocked Users"
-              icon="shield-outline"
-              onPress={() => router.push("/Menu/blockedusers")}
-            />
-          </MenuSection>
-
           <MenuSection title="">
             <MenuItem 
               title="Sign Out"

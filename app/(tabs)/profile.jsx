@@ -1,142 +1,220 @@
-import { SafeAreaView, View, Text, Image, FlatList, TouchableOpacity, TextInput, FlatListComponent, ScrollView, Alert, Animated, ActivityIndicator, Platform, Keyboard } from 'react-native'
-import React, { useEffect, useRef } from 'react'
+import { SafeAreaView, View, Text, Image, FlatList, TouchableOpacity, TextInput, FlatListComponent, ScrollView, Alert, Modal, Animated, KeyboardAvoidingView, Platform } from 'react-native'
+import React, {useEffect, useRef} from 'react'
 import * as DocumentPicker from "expo-document-picker";
-import { useGlobalContext } from '../../context/GlobalProvider'
+import * as ImagePicker from 'expo-image-picker';
+
+import {useGlobalContext} from '../../context/GlobalProvider'
 import images from '../../constants/images'
 import { useState } from 'react'
 import icons from "../../constants/icons"
 import { updateUser, getCurrentUser, createLabel, getUserPhotos, createImagePost, fetchFriends } from '../../lib/appwrite'
 import useAppwrite from '../../lib/useAppwrite'
-import { Ionicons } from '@expo/vector-icons'
-import * as ImagePicker from 'expo-image-picker'
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 
 const Profile = () => {
   const { user, setUser, setIsLogged } = useGlobalContext();
-  let { data: photos, refetch } = useAppwrite(() => getUserPhotos(user.$id));
+  let { data: photos, refetch} = useAppwrite(() => getUserPhotos(user.$id));
+  const {
+    name,
+    avatar,
+    school,
+    major,
+    career,
+    location,
+    background,
+    interest
+  } = user;
+  console.log(user.$id);
+  const [form, setForm] = useState({
+      newName: {name},
+      newAvatar: {avatar},
+      newSchool: {school},
+      newMajor: {major},
+      newCareer: {career},
+      newLocation: {location},
+      newBackground: {background},
+      newInterest: "",
+  })
+  const [editing, setEditing] = useState(false);
+  const submit = async () => {
+    try{
+      await updateUser(form.newName, form.newLocation, form.newMajor, form.newCareer, form.newSchool);
+      const result = await getCurrentUser();
+      setUser(result);
+    } catch(error){
+      Alert.alert('Error', error.message);
+    }
+  }
+  const addLabel = async() => {
+    try{
+      await createLabel(form.newInterest);
+      const result = await getCurrentUser();
+      setUser(result);
+    } catch(error){
+      Alert.alert('Error', error.message);
+    }
+  }
+  const [form2, setForm2]=useState({
+    photo: null,
+  })
+  const [showImagePicker, setShowImagePicker] = useState(false);
+  const [imagePickerType, setImagePickerType] = useState(null);
+
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(20)).current;
-  const [uploading, setUploading] = useState(false);
+  const slideAnim = useRef(new Animated.Value(100)).current;
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const updatedUser = await getCurrentUser();
-        setUser(updatedUser);
-      } catch (error) {
-        console.error("Failed to fetch user data:", error);
-      }
-    };
-    fetchUserData();
-
-    // Request permission for image library
-    (async () => {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Sorry, we need camera roll permissions to make this work!');
-      }
-    })();
-    
-    // const { data: friendList, isLoading: isLoadingFriends, refetch: refetchFriends } = useAppwrite(() => fetchFriends)
-    // Fade in animation
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 600,
+        duration: 1000,
         useNativeDriver: true,
       }),
       Animated.timing(slideAnim, {
         toValue: 0,
-        duration: 600,
+        duration: 800,
         useNativeDriver: true,
-      }),
+      })
     ]).start();
   }, []);
 
-  async function getFriends(){
-    let friendList = await fetchFriends();
-    return friendList.length;
-  }
-  const numFriends = getFriends();
-  if (!user) {
-    return (
-      <View className="flex-1 items-center justify-center">
-        <ActivityIndicator size="large" color="#9333EA" />
-      </View>
-    );
-  }
-
-  const { name, avatar, school, major, career, location, background, interest } = user || {};
-
-  const [form, setForm] = useState({
-    newName: name,
-    newAvatar: { avatar },
-    newSchool: school,
-    newMajor: major,
-    newCareer: career,
-    newLocation: location,
-    newBackground: { background },
-    newInterest: "",
-  });
-
-  const [editing, setEditing] = useState(false);
-
-  const submit = async () => {
+  const handleImageUpload = async (type, source) => {
     try {
-      await updateUser(form.newName, form.newLocation, form.newMajor, form.newCareer, form.newSchool);
-      const result = await getCurrentUser();
-      setUser(result);
-      setEditing(false);
+      let result;
+      
+      if (source === 'camera') {
+        const permission = await ImagePicker.requestCameraPermissionsAsync();
+        if (permission.granted === false) {
+          Alert.alert("Permission Required", "Camera access is required to take photos");
+          return;
+        }
+        result = await ImagePicker.launchCameraAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          allowsEditing: true,
+          aspect: type === 'avatar' ? [1, 1] : [16, 9],
+          quality: 1,
+        });
+      } else {
+        const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (permission.granted === false) {
+          Alert.alert("Permission Required", "Library access is required to pick photos");
+          return;
+        }
+        result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          allowsEditing: true,
+          aspect: type === 'avatar' ? [1, 1] : [16, 9],
+          quality: 1,
+        });
+      }
+
+      if(!result.canceled){
+        const imageUri = result.assets[0].uri;
+        
+        if(type === 'background' || type === 'avatar') {
+          try {
+            await updateUser(
+              form.newName, 
+              form.newLocation, 
+              form.newMajor, 
+              form.newCareer, 
+              form.newSchool,
+              type === 'avatar' ? imageUri : avatar,
+              type === 'background' ? imageUri : background
+            );
+            const updatedUser = await getCurrentUser();
+            setUser(updatedUser);
+            Alert.alert("Success", `${type} updated successfully`);
+          } catch (error) {
+            Alert.alert("Error", error.message);
+          }
+        } else {
+          setForm2({
+            ...form2,
+            photo: { uri: imageUri },
+          });
+        }
+      }
+      setShowImagePicker(false);
     } catch (error) {
-      Alert.alert('Error', error.message);
+      Alert.alert("Error", "Failed to pick image");
     }
   };
 
-  const addLabel = async () => {
+  const ImagePickerModal = () => (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={showImagePicker}
+      onRequestClose={() => setShowImagePicker(false)}
+    >
+      <TouchableOpacity 
+        className="flex-1 bg-black/50 justify-end"
+        onPress={() => setShowImagePicker(false)}
+      >
+        <View className="bg-white rounded-t-3xl p-6">
+          <View className="items-center mb-6">
+            <View className="w-12 h-1 bg-gray-300 rounded-full mb-4"/>
+            <Text className="text-xl font-psemibold">Choose Photo</Text>
+          </View>
+          
+          <TouchableOpacity 
+            className="flex-row items-center p-4 bg-gray-50 rounded-xl mb-3"
+            onPress={() => handleImageUpload(imagePickerType, 'camera')}
+          >
+            <View className="bg-blue-100 rounded-full p-2 mr-4">
+              <Image 
+                source={require('../../assets/icons/camera.png')}
+                className="w-6 h-6" 
+                resizeMode="contain"
+              />
+            </View>
+            <Text className="text-base font-pregular">Take Photo</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            className="flex-row items-center p-4 bg-gray-50 rounded-xl mb-3"
+            onPress={() => handleImageUpload(imagePickerType, 'library')}
+          >
+            <View className="bg-purple-100 rounded-full p-2 mr-4">
+              <Image 
+                source={icons.photo} 
+                className="w-6 h-6" 
+                resizeMode="contain"
+              />
+            </View>
+            <Text className="text-base font-pregular">Choose from Library</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            className="mt-2 p-4 items-center"
+            onPress={() => setShowImagePicker(false)}
+          >
+            <Text className="text-blue-500 font-psemibold">Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+    </Modal>
+  );
+
+  const upload = async() => {
     try {
-      await createLabel(form.newInterest);
-      const result = await getCurrentUser();
-      setUser(result);
-      setForm(prev => ({ ...prev, newInterest: "" }));
-    } catch (error) {
-      Alert.alert('Error', error.message);
-    }
-  };
-
-  const [form2, setForm2] = useState({
-    photo: null,
-  });
-
-  const openPicker = async () => {
-    const result = await DocumentPicker.getDocumentAsync({
-      type: ["image/png", "image/jpg"]
-    });
-    if (!result.canceled) {
-      setForm2({
-        ...form2,
-        photo: result.assets[0],
-      });
-    }
-  };
-
-  const upload = async () => {
-    try {
-      if (form2.photo != null) {
+      if(form2.photo!=null){
         await createImagePost({
           ...form2,
           userId: user.$id,
         });
-        Alert.alert("Success", "Photo uploaded successfully");
+
+        Alert.alert("Success", "Post uploaded successfully");
       }
     } catch (error) {
       Alert.alert("Error", error.message);
     } finally {
       setForm2({
-        photo: null,
+        photo:null,
       });
     }
-    photos = await refetch();
-  };
+    photos=await refetch();
+  }
 
   useEffect(() => {
     if (form2.photo) {
@@ -144,357 +222,278 @@ const Profile = () => {
     }
   }, [form2.photo]);
 
-  const pickImage = async (type) => {
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: 'Images',
-        allowsEditing: true,
-        aspect: type === 'avatar' ? [1, 1] : [16, 9],
-        quality: 0.8,
-      });
-
-      if (!result.canceled) {
-        setUploading(true);
-        const imageUri = result.assets[0].uri;
-        
-        try {
-          // Update user with all existing data plus the new image
-          await updateUser(
-            user.name,
-            user.location,
-            user.major,
-            user.career,
-            user.school,
-            type === 'avatar' ? imageUri : user.avatar,
-            type === 'background' ? imageUri : user.background
-          );
-          
-          // Refresh user data
-          const updatedUser = await getCurrentUser();
-          setUser(updatedUser);
-          Alert.alert('Success', 'Photo updated successfully!');
-        } catch (error) {
-          console.error('Update error:', error);
-          Alert.alert('Error', 'Failed to update photo. Please try again.');
-        }
-      }
-    } catch (error) {
-      console.error('Image picker error:', error);
-      Alert.alert('Error', 'An error occurred while picking the image.');
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const addPhoto = async () => {
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: 'Images',
-        allowsEditing: true,
-        aspect: [4, 3],
-        quality: 0.8,
-      });
-
-      if (!result.canceled) {
-        setUploading(true);
-        const imageUri = result.assets[0].uri;
-        
-        try {
-          await createImagePost({
-            photo: {
-              uri: imageUri,
-              type: 'image/jpeg',
-              name: 'photo.jpg',
-            },
-            userId: user.$id,
-          });
-          await refetch();
-          Alert.alert('Success', 'Photo added successfully!');
-        } catch (error) {
-          Alert.alert('Error', 'Failed to add photo. Please try again.');
-        }
-      }
-    } catch (error) {
-      Alert.alert('Error', 'An error occurred while picking the image.');
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const ProfileSection = ({ title, icon, children }) => (
-    <Animated.View 
-      style={{ 
-        opacity: fadeAnim,
-        transform: [{ translateY: slideAnim }]
-      }}
-      className="my-4 mx-6 bg-white rounded-2xl p-4 shadow-sm"
-    >
-      <View className="flex-row items-center mb-4">
-        <Image
-          source={icon}
-          className="w-6 h-6 mr-3 opacity-60"
-          resizeMode='contain'
-        />
-        <Text className="font-semibold text-xl text-gray-800">{title}</Text>
-      </View>
-      {children}
-    </Animated.View>
-  );
-
-  const InterestTag = ({ text }) => (
-    <View className="bg-purple-50 px-4 py-2 rounded-full mr-2 mt-2 border border-purple-200">
-      <Text className="text-purple-700 font-medium text-sm">{text}</Text>
-    </View>
-  );
-
   return (
-    <KeyboardAwareScrollView
-      enableOnAndroid
-      enableAutomaticScroll
-      keyboardShouldPersistTaps="handled"
-      extraScrollHeight={Platform.OS === 'ios' ? 120 : 40}
-      contentContainerStyle={{ flexGrow: 1 }}
-      className="flex-1 bg-gray-50"
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      className="flex-1 bg-white"
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      enabled
     >
-      <SafeAreaView>
-        {/* Background & Profile Image */}
-        <View className="relative mb-20">
-          <TouchableOpacity 
-            onPress={() => pickImage('background')}
-            className="relative w-full h-[200px]"
-            activeOpacity={0.9}
+      <ScrollView 
+        className="flex-1" 
+        contentContainerStyle={{
+          flexGrow: 1,
+          paddingBottom: Platform.OS === 'ios' ? 90 : 20
+        }}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        bounces={false}
+      >
+        <SafeAreaView className="relative">
+          <Animated.View 
+            className="relative h-[260px] -mt-20"
+            style={{ opacity: fadeAnim }}
           >
-            <Image
-              source={{ uri: background }}
-              className="w-full h-[200px]"
-              resizeMode='cover'
-            />
-            <View className="absolute bottom-4 right-4 bg-purple-500 rounded-full p-3">
-              <Ionicons name="camera" size={20} color="white" />
-            </View>
-          </TouchableOpacity>
-          
-          <View className="absolute -bottom-16 w-full items-center">
             <TouchableOpacity 
-              onPress={() => pickImage('avatar')}
-              className="relative"
-              activeOpacity={0.9}
-            >
-              <Image
-                source={{ uri: avatar }}
-                className="w-[120px] h-[120px] rounded-full bg-white border-4 border-white shadow-lg"
-                resizeMode="cover"
-              />
-              <View className="absolute bottom-0 right-0 bg-purple-500 rounded-full p-2 shadow-sm">
-                <Ionicons name="camera" size={20} color="white" />
-              </View>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Loading Overlay */}
-        {uploading && (
-          <View className="absolute inset-0 bg-black/50 items-center justify-center">
-            <ActivityIndicator size="large" color="#ffffff" />
-            <Text className="text-white mt-2">Uploading...</Text>
-          </View>
-        )}
-
-        {/* Name and Location */}
-        <Animated.View 
-          style={{ 
-            opacity: fadeAnim,
-            transform: [{ translateY: slideAnim }]
-          }}
-          className="items-center mb-6"
-        >
-          <View className="flex-row items-center">
-            {editing ? (
-              <TextInput
-                className="text-2xl font-bold text-center border border-purple-300 rounded-xl px-4 py-2 min-w-[200px]"
-                value={form.newName}
-                placeholder={name}
-                placeholderTextColor="#9CA3AF"
-                onChangeText={(text) => setForm({ ...form, newName: text })}
-                returnKeyType="next"
-                autoCorrect={false}
-                autoCapitalize="none"
-              />
-            ) : (
-              <Text className="text-2xl font-bold text-gray-800">{name}</Text>
-            )}
-            <Image source={images.blueCheck} className="w-6 h-6 ml-2" resizeMode="contain" />
-          </View>
-          {editing ? (
-            <TextInput
-              className="text-gray-600 text-base mt-2 border border-purple-300 rounded-xl px-4 py-2 min-w-[200px]"
-              value={form.newLocation}
-              placeholder={location}
-              placeholderTextColor="#9CA3AF"
-              onChangeText={(text) => setForm({ ...form, newLocation: text })}
-              returnKeyType="next"
-              autoCorrect={false}
-              autoCapitalize="none"
-            />
-          ) : (
-            <Text className="text-gray-600 text-base mt-1">{location}</Text>
-          )}
-          <Text href="/Menu/universityhub">{numFriends} Friends</Text>
-        </Animated.View>
-
-        {/* Education Section */}
-        <ProfileSection title="Education" icon={icons.education}>
-          {editing ? (
-            <View>
-              <TextInput
-                className="text-gray-600 text-base border border-purple-300 rounded-xl px-4 py-2 mb-2"
-                value={form.newSchool}
-                placeholder={school}
-                placeholderTextColor="#9CA3AF"
-                onChangeText={(text) => setForm({ ...form, newSchool: text })}
-                returnKeyType="next"
-                autoCapitalize="words"
-                editable={editing}
-              />
-            </View>
-          ) : (
-            <Text className="text-gray-600 text-base mb-2">{school}</Text>
-          )}
-        </ProfileSection>
-
-        {/* Interests Section */}
-        <ProfileSection title="Interests" icon={icons.heart}>
-          <View className="flex-row justify-between items-center mb-4">
-            <TouchableOpacity 
+              className="w-full h-[250px] active:opacity-90 transition-opacity"
               onPress={() => {
-                setEditing(!editing);
-                if (editing) {
-                  submit();
-                }
+                setImagePickerType('background');
+                setShowImagePicker(true);
               }}
-              className={`px-4 py-2 rounded-full ${editing ? 'bg-purple-500' : 'bg-purple-100'}`}
             >
-              <Text className={`font-medium ${editing ? 'text-white' : 'text-purple-700'}`}>
-                {editing ? "Save" : "Edit"}
-              </Text>
+              <Image 
+                source={{uri: background}}
+                className="w-full h-[250px] absolute top-0 left-0"
+                resizeMode='cover'
+              />
+              <View className="absolute top-0 left-0 w-full h-[250px] bg-black/20" />
+              
+              <View className="absolute bottom-4 right-4 bg-white/95 rounded-full px-4 py-2 flex-row items-center shadow-lg">
+                <Image source={images.pencil} className="w-4 h-4 mr-2" resizeMode="contain"/>
+                <Text className="font-psemibold text-sm text-gray-700">Change Cover</Text>
+              </View>
             </TouchableOpacity>
-          </View>
 
-          {/* Major */}
-          <View className="mb-4">
-            <Text className="font-medium text-gray-800 mb-2">Major:</Text>
-            {editing ? (
-              <View>
-                <TextInput
-                  className="text-gray-600 border border-purple-300 rounded-xl px-4 py-2"
-                  value={form.newMajor}
-                  placeholder={major}
-                  placeholderTextColor="#9CA3AF"
-                  onChangeText={(text) => setForm({ ...form, newMajor: text })}
-                  returnKeyType="next"
-                  autoCapitalize="words"
-                  editable={editing}
+            <View className="absolute -bottom-16 w-full items-center">
+              <View className="relative">
+                <Image 
+                  source={{uri: avatar}}
+                  className="w-[120px] h-[120px] rounded-full bg-white border-white border-4 shadow-xl"
+                  resizeMode="cover"
                 />
+                <TouchableOpacity 
+                  className="absolute bottom-2 right-2 bg-blue-500 rounded-full p-2.5 shadow-lg active:scale-95 transition-transform" 
+                  onPress={() => {
+                    setImagePickerType('avatar');
+                    setShowImagePicker(true);
+                  }}
+                >
+                  <Image source={images.pencil} className="w-5 h-5 tint-white" resizeMode="contain"/>
+                </TouchableOpacity>
               </View>
-            ) : (
-              <View className="bg-gray-100 px-4 py-2 rounded-xl">
-                <Text className="text-gray-700">{major}</Text>
-              </View>
-            )}
-          </View>
-
-          {/* Career */}
-          <View className="mb-4">
-            <Text className="font-medium text-gray-800 mb-2">Career:</Text>
-            {editing ? (
-              <View>
-                <TextInput
-                  className="text-gray-600 border border-purple-300 rounded-xl px-4 py-2"
-                  value={form.newCareer}
-                  placeholder={career}
-                  placeholderTextColor="#9CA3AF"
-                  onChangeText={(text) => setForm({ ...form, newCareer: text })}
-                  returnKeyType="next"
-                  autoCapitalize="words"
-                  editable={editing}
-                />
-              </View>
-            ) : (
-              <View className="bg-gray-100 px-4 py-2 rounded-xl">
-                <Text className="text-gray-700">{career}</Text>
-              </View>
-            )}
-          </View>
-
-          {/* Personal Interests */}
-          <View>
-            <Text className="font-medium text-gray-800 mb-2">Personal:</Text>
-            <View className="flex-row flex-wrap">
-              {interest.map((item) => (
-                <InterestTag key={item.$id} text={item.interest_name} />
-              ))}
             </View>
-          </View>
+          </Animated.View>
+          
+          <Animated.View 
+            className="items-center justify-center mt-20"
+            style={{ 
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }]
+            }}
+          >
+            <View className="flex flex-row items-center">
+              {editing ? (
+                <TextInput 
+                  className="flex text-black font-psemibold text-2xl border-2 border-blue-300 rounded-xl px-4 py-2 shadow-sm"
+                  value={form.newName}
+                  placeholder={name}
+                  placeholderTextColor="#7b7b8b"
+                  onChangeText={(e) => setForm({ ...form, newName: e})}
+                  selectionColor="#3b82f6"
+                />
+              ) : (
+                <Text className="text-2xl font-psemibold">{name}</Text>
+              )}
+              <Image source={images.blueCheck} className="w-6 h-6 ml-2" resizeMode="contain"/>
+            </View>
+            {editing ? (
+              <TextInput 
+                className="flex text-gray-500 font-pregular text-base border-2 border-blue-300 rounded-xl px-4 py-2 mt-2 shadow-sm"
+                value={form.newLocation}
+                placeholder={location}
+                placeholderTextColor="#7b7b8b"
+                onChangeText={(e) => setForm({ ...form, newLocation: e})}
+                selectionColor="#3b82f6"
+              />
+            ) : (
+              <Text className="text-gray-500 font-pregular text-base mt-1">{location}</Text>
+            )}
+          </Animated.View>
 
-          {editing && (
-            <View className="flex-row items-center mt-4">
-              <View style={{ flex: 1 }}>
-                <TextInput
-                  className="text-gray-600 border border-purple-300 rounded-xl px-4 py-2 mr-2"
-                  value={form.newInterest}
-                  placeholder="Add new interest"
-                  placeholderTextColor="#9CA3AF"
-                  onChangeText={(text) => setForm({ ...form, newInterest: text })}
-                  returnKeyType="done"
-                  autoCapitalize="words"
-                  editable={editing}
-                  onSubmitEditing={() => {
-                    if (form.newInterest.trim() !== "") {
-                      addLabel();
+          <Animated.View 
+            style={{ 
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }]
+            }}
+          >
+            <View className="mt-8 mx-6 bg-gray-50 rounded-2xl p-6 shadow-md">
+              <View className="flex flex-row items-center"> 
+                <View className="bg-blue-100 rounded-full p-2.5">
+                  <Image 
+                    source={icons.education}
+                    className="w-6 h-6"
+                    resizeMode='contain'
+                  />
+                </View>
+                <Text className="font-psemibold text-xl ml-3">Education</Text>
+              </View>
+              {editing ? (
+                <TextInput 
+                  className="flex text-gray-500 font-pregular text-base border-2 border-blue-300 rounded-xl px-4 py-2 mt-3 shadow-sm bg-white"
+                  value={form.newSchool}
+                  placeholder={school}
+                  placeholderTextColor="#7b7b8b"
+                  onChangeText={(e) => setForm({ ...form, newSchool: e})}
+                  selectionColor="#3b82f6"
+                />
+              ) : (
+                <Text className="mt-3 text-gray-600 font-pregular text-base">{school}</Text>
+              )}
+            </View>
+
+            <View className="mt-4 mx-6 bg-gray-50 rounded-2xl p-6 shadow-md">
+              <View className="flex flex-row justify-between items-center">
+                <View className="flex flex-row items-center">
+                  <View className="bg-red-100 rounded-full p-2.5">
+                    <Image 
+                      source={icons.heart}
+                      className="w-5 h-5"
+                      resizeMode='contain'
+                    />
+                  </View>
+                  <Text className="font-psemibold text-xl ml-3">Interests & Career</Text>
+                </View>
+                <TouchableOpacity 
+                  onPress={()=>{
+                    setEditing(!editing)
+                    if(editing){
+                      submit();
                     }
                   }}
-                />
+                  className={`px-4 py-2 rounded-full active:scale-95 transition-transform shadow-sm ${editing ? 'bg-blue-500' : 'bg-gray-100'}`}
+                >
+                  <Text className={`text-base font-psemibold ${editing ? 'text-white' : 'text-blue-500'}`}>
+                    {editing ? "Save" : "Edit"}
+                  </Text>
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity
-                onPress={() => {
-                  if (form.newInterest.trim() !== "") {
-                    addLabel();
-                  }
-                }}
-                className="bg-purple-500 rounded-xl px-4 py-2"
-              >
-                <Text className="text-white font-medium">Add</Text>
-              </TouchableOpacity>
+
+              <View className="flex flex-row my-5 items-center">
+                <Text className="font-psemibold text-base w-20">Major:</Text>
+                {editing ? (
+                  <TextInput 
+                    className="flex-1 text-gray-500 font-pregular text-base border-2 border-blue-300 rounded-xl px-4 py-2 ml-2 shadow-sm bg-white"
+                    value={form.newMajor}
+                    placeholder={major}
+                    placeholderTextColor="#7b7b8b"
+                    onChangeText={(e) => setForm({ ...form, newMajor: e})}
+                    selectionColor="#3b82f6"
+                  />
+                ) : (
+                  <Text className="font-pregular text-base ml-2 bg-white px-4 py-2 rounded-xl text-gray-600 shadow-sm" numberOfLines={1} ellipsizeMode="tail">
+                    {major}
+                  </Text>
+                )}
+              </View>
+
+              <View className="flex flex-row my-5 items-center">
+                <Text className="font-psemibold text-base w-20">Career:</Text>
+                {editing ? (
+                  <TextInput 
+                    className="flex-1 text-gray-500 font-pregular text-base border-2 border-blue-300 rounded-xl px-4 py-2 ml-2 shadow-sm bg-white"
+                    value={form.newCareer}
+                    placeholder={career}
+                    placeholderTextColor="#7b7b8b"
+                    onChangeText={(e) => setForm({ ...form, newCareer: e})}
+                    selectionColor="#3b82f6"
+                  />
+                ) : (
+                  <Text className="font-pregular text-base ml-2 bg-white px-4 py-2 rounded-xl text-gray-600 shadow-sm" numberOfLines={1} ellipsizeMode="tail">
+                    {career}
+                  </Text>
+                )}
+              </View>
+
+              <View className="mt-4">
+                <Text className="font-psemibold text-base mb-3">Personal Interests:</Text>
+                <View className="flex flex-row flex-wrap gap-2">
+                  {interest.map((item) => (
+                    <Text 
+                      className="font-pregular text-base bg-white px-4 py-2 rounded-xl text-gray-600 shadow-sm" 
+                      key={item.$id}
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                      style={{ maxWidth: '45%' }}
+                    >
+                      {item.interest_name}
+                    </Text>
+                  ))}
+                </View>
+              </View>
+
+              {editing && (
+                <View className="flex flex-row items-center gap-2 mt-4">
+                  <TextInput 
+                    className="flex-1 text-gray-500 font-pregular text-base border-2 border-blue-300 rounded-xl px-4 py-2 shadow-sm bg-white"
+                    value={form.newInterest}
+                    placeholder="Add new interest"
+                    placeholderTextColor="#7b7b8b"
+                    onChangeText={(e) => setForm({ ...form, newInterest: e})}
+                    selectionColor="#3b82f6"
+                  />
+                  <TouchableOpacity 
+                    onPress={()=>{
+                      if(form.newInterest!=""){
+                        addLabel();
+                      }
+                    }}
+                    className="bg-blue-500 rounded-full px-4 py-2 shadow-sm active:scale-95 transition-transform"
+                  >
+                    <Text className="font-psemibold text-base text-white">Add</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
             </View>
-          )}
-        </ProfileSection>
 
-        {/* Photos Section */}
-        <ProfileSection title="Photos" icon={icons.photo}>
-          <View className="flex-row justify-between items-center mb-4">
-            <TouchableOpacity
-              onPress={addPhoto}
-              className="bg-purple-100 px-4 py-2 rounded-full flex-row items-center"
-              disabled={uploading}
-            >
-              <Ionicons name="add" size={20} color="#9333EA" />
-              <Text className="text-purple-700 font-medium ml-1">Add Photo</Text>
-            </TouchableOpacity>
-          </View>
-          <View className="flex-row flex-wrap gap-2">
-            {photos?.map((item) => (
-              <Image
-                key={item.$id}
-                source={{ uri: item.image }}
-                className="w-[100px] h-[100px] rounded-xl"
-                resizeMode="cover"
-              />
-            ))}
-          </View>
-        </ProfileSection>
-      </SafeAreaView>
-    </KeyboardAwareScrollView>
-  );
-};
+            <View className="mt-4 mx-6 mb-6 bg-gray-50 rounded-2xl p-6 shadow-md">
+              <View className="flex flex-row justify-between items-center mb-4">
+                <View className="flex flex-row items-center">
+                  <View className="bg-purple-100 rounded-full p-2.5">
+                    <Image className="w-6 h-6" resizeMode='contain' source={icons.photo}/>
+                  </View>
+                  <Text className="font-psemibold text-xl ml-3">Photos</Text>
+                </View>
+                <TouchableOpacity 
+                  onPress={() => {
+                    setImagePickerType('gallery');
+                    setShowImagePicker(true);
+                  }}
+                  className="bg-blue-500 rounded-full px-4 py-2 shadow-sm active:scale-95 transition-transform"
+                >
+                  <Text className="font-psemibold text-base text-white">Add Photo</Text>
+                </TouchableOpacity>
+              </View>
+              
+              <View className="flex flex-row gap-3 flex-wrap">
+                {photos.map((item) => (
+                  <View key={item.$id} className="rounded-xl overflow-hidden shadow-md">
+                    <Image 
+                      className="w-[100px] h-[100px]" 
+                      resizeMode="cover" 
+                      source={{uri: item.image}}
+                    />
+                  </View>
+                ))}
+              </View>
+            </View>
+          </Animated.View>
 
-export default Profile;
+          <ImagePickerModal />
+        </SafeAreaView>
+      </ScrollView>
+    </KeyboardAvoidingView>
+  )
+}
+
+export default Profile

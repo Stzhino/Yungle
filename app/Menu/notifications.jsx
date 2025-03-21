@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Switch, TouchableOpacity, StyleSheet, Alert, Animated } from 'react-native'
+import { View, Text, ScrollView, Switch, TouchableOpacity, StyleSheet, Alert, Animated, Image } from 'react-native'
 import React, { useState, useEffect, useRef } from 'react'
 import { useGlobalContext } from '../../context/GlobalProvider'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -6,6 +6,7 @@ import { getNotificationPreferences, updateNotificationPreferences } from '../..
 import useAppwrite from '../../lib/useAppwrite'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
+import { LinearGradient } from 'expo-linear-gradient'
 
 const NotificationPreferences = () => {
   const { user } = useGlobalContext();
@@ -22,21 +23,26 @@ const NotificationPreferences = () => {
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current;
+  const headerScale = useRef(new Animated.Value(0.95)).current;
 
   useEffect(() => {
     if (savedPreferences) {
       setPreferences(savedPreferences);
     }
-    // Fade in animation
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 500,
+        duration: 600,
         useNativeDriver: true,
       }),
       Animated.timing(slideAnim, {
         toValue: 0,
-        duration: 500,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+      Animated.spring(headerScale, {
+        toValue: 1,
+        friction: 8,
         useNativeDriver: true,
       }),
     ]).start();
@@ -81,9 +87,13 @@ const NotificationPreferences = () => {
       }}
       className="mb-3"
     >
-      <View className="flex-row justify-between items-center p-4 bg-white rounded-xl shadow-sm border border-gray-100">
+      <View className="flex-row justify-between items-center p-4 bg-white/80 backdrop-blur-md rounded-xl border border-white/20">
+        <LinearGradient
+          colors={['rgba(153, 2, 211, 0.1)', 'rgba(153, 2, 211, 0.05)']}
+          className="absolute inset-0 rounded-xl"
+        />
         <View className="flex-1 mr-4">
-          <Text className="font-semibold text-gray-800 text-base">{title}</Text>
+          <Text className="font-psemibold text-gray-900 text-base">{title}</Text>
           <Text className="text-gray-500 text-sm mt-1" numberOfLines={2}>
             {description}
           </Text>
@@ -101,20 +111,41 @@ const NotificationPreferences = () => {
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
-      {/* Header */}
-      <View className="flex-row items-center px-4 py-3 bg-white border-b border-gray-100">
-        <TouchableOpacity 
-          onPress={() => navigation.goBack()}
-          className="p-2 -ml-2"
+    <SafeAreaView className="flex-1">
+      <LinearGradient
+        colors={['#f8f9fa', '#f1f3f5']}
+        className="absolute inset-0"
+      />
+      <ScrollView className="flex-1">
+        <Animated.View 
+          style={{ 
+            opacity: fadeAnim,
+            transform: [{ translateY: slideAnim }]
+          }}
+          className="p-4"
         >
-          <Ionicons name="arrow-back" size={24} color="#6D28D9" />
-        </TouchableOpacity>
-        <Text className="text-xl font-bold ml-2 text-gray-800">Notification Settings</Text>
-      </View>
+          {/* Header with Back Button */}
+          <View className="flex-row items-center mb-6">
+            <TouchableOpacity 
+              onPress={() => navigation.goBack()}
+              className="mr-4"
+            >
+              <Image 
+                source={require('../../assets/icons/leftArrow.png')}
+                className="w-6 h-6" 
+                resizeMode='contain'
+                style={{ tintColor: '#9902d3' }}
+              />
+            </TouchableOpacity>
+            <Animated.View 
+              style={{ transform: [{ scale: headerScale }] }}
+              className="flex-1"
+            >
+              <Text className="text-3xl font-psemibold text-gray-900">Notifications</Text>
+              <Text className="text-base text-gray-500 mt-1">Manage your notification preferences</Text>
+            </Animated.View>
+          </View>
 
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        <View className="px-4 py-6">
           {/* Position Section */}
           <Animated.View 
             style={{ 
@@ -123,36 +154,46 @@ const NotificationPreferences = () => {
             }}
             className="mb-8"
           >
-            <Text className="text-lg font-semibold mb-3 text-gray-800">Notification Position</Text>
+            <Text className="text-lg font-psemibold mb-3 text-gray-900">Notification Position</Text>
             <View className="flex-row space-x-4">
               <TouchableOpacity 
                 onPress={() => setPosition('top')}
-                className={`flex-1 py-4 rounded-xl shadow-sm ${preferences.position === 'top' ? 'bg-purple-500' : 'bg-white border border-gray-200'}`}
-                style={{ elevation: preferences.position === 'top' ? 2 : 0 }}
+                className={`flex-1 py-4 rounded-xl backdrop-blur-sm ${
+                  preferences.position === 'top' 
+                    ? 'bg-primary/10 border border-primary/20' 
+                    : 'bg-white/50 border border-white/20'
+                }`}
               >
                 <View className="items-center">
                   <Ionicons 
                     name="arrow-up" 
                     size={24} 
-                    color={preferences.position === 'top' ? '#ffffff' : '#6B7280'} 
+                    color={preferences.position === 'top' ? '#9902d3' : '#6B7280'} 
                   />
-                  <Text className={`text-center mt-1 ${preferences.position === 'top' ? 'text-white font-semibold' : 'text-gray-600'}`}>
+                  <Text className={`text-center mt-1 font-psemibold ${
+                    preferences.position === 'top' ? 'text-primary' : 'text-gray-600'
+                  }`}>
                     Top
                   </Text>
                 </View>
               </TouchableOpacity>
               <TouchableOpacity 
                 onPress={() => setPosition('bottom')}
-                className={`flex-1 py-4 rounded-xl shadow-sm ${preferences.position === 'bottom' ? 'bg-purple-500' : 'bg-white border border-gray-200'}`}
-                style={{ elevation: preferences.position === 'bottom' ? 2 : 0 }}
+                className={`flex-1 py-4 rounded-xl backdrop-blur-sm ${
+                  preferences.position === 'bottom' 
+                    ? 'bg-primary/10 border border-primary/20' 
+                    : 'bg-white/50 border border-white/20'
+                }`}
               >
                 <View className="items-center">
                   <Ionicons 
                     name="arrow-down" 
                     size={24} 
-                    color={preferences.position === 'bottom' ? '#ffffff' : '#6B7280'} 
+                    color={preferences.position === 'bottom' ? '#9902d3' : '#6B7280'} 
                   />
-                  <Text className={`text-center mt-1 ${preferences.position === 'bottom' ? 'text-white font-semibold' : 'text-gray-600'}`}>
+                  <Text className={`text-center mt-1 font-psemibold ${
+                    preferences.position === 'bottom' ? 'text-primary' : 'text-gray-600'
+                  }`}>
                     Bottom
                   </Text>
                 </View>
@@ -162,7 +203,7 @@ const NotificationPreferences = () => {
 
           {/* Notification Types Section */}
           <View className="space-y-4">
-            <Text className="text-lg font-semibold mb-3 text-gray-800">Notification Types</Text>
+            <Text className="text-lg font-psemibold mb-3 text-gray-900">Notification Types</Text>
             
             <NotificationOption
               title="Friend Requests"
@@ -192,10 +233,10 @@ const NotificationPreferences = () => {
               onToggle={() => toggleSwitch('comments')}
             />
           </View>
-        </View>
+        </Animated.View>
       </ScrollView>
     </SafeAreaView>
-  )
-}
+  );
+};
 
-export default NotificationPreferences
+export default NotificationPreferences;
