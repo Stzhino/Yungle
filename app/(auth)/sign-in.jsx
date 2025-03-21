@@ -1,4 +1,4 @@
-import { View, Text, SafeAreaView, ScrollView, Image, Alert, Animated, Dimensions } from 'react-native'
+import { View, Text, SafeAreaView, ScrollView, Image, Alert, Animated, Dimensions, KeyboardAvoidingView} from 'react-native'
 import React, { useState, useEffect, useRef } from 'react'
 import { router } from 'expo-router'
 import images from '../../constants/images'
@@ -67,7 +67,7 @@ const SignIn = () => {
   }
 
   return (
-    <KeyboardMover>
+    <KeyboardAvoidingView>
       <SafeAreaView className="h-full">
         <LinearGradient
           colors={['#000000', '#1a0036', '#2a0052']}
@@ -133,7 +133,7 @@ const SignIn = () => {
           </Animated.View>
         </ScrollView>
       </SafeAreaView>
-    </KeyboardMover>
+    </KeyboardAvoidingView>
   )
 }
 
