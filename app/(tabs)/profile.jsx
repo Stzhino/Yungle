@@ -7,8 +7,9 @@ import {useGlobalContext} from '../../context/GlobalProvider'
 import images from '../../constants/images'
 import { useState } from 'react'
 import icons from "../../constants/icons"
-import { updateUser, getCurrentUser, createLabel, getUserPhotos, createImagePost, fetchFriends } from '../../lib/appwrite'
+import { updateUser, getCurrentUser, createLabel, getUserPhotos, createImagePost } from '../../lib/appwrite'
 import useAppwrite from '../../lib/useAppwrite'
+import { useRouter } from "expo-router";
 
 const Profile = () => {
   const { user, setUser, setIsLogged } = useGlobalContext();
@@ -24,6 +25,7 @@ const Profile = () => {
     interest
   } = user;
   console.log(user.$id);
+  const router = useRouter();
   const [form, setForm] = useState({
       newName: {name},
       newAvatar: {avatar},
@@ -319,6 +321,9 @@ const Profile = () => {
             ) : (
               <Text className="text-gray-500 font-pregular text-base mt-1">{location}</Text>
             )}
+            <TouchableOpacity className="mt-1" onPress={() => router.push('friend/friend')}>
+              <Text className="font-pregular text-blue-500">View Friends</Text>
+            </TouchableOpacity>
           </Animated.View>
 
           <Animated.View 

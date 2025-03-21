@@ -58,14 +58,14 @@ const Suggestion = () => {
   const { data: FashionUsers, isLoading: isLoadingFashion, refetch: refetchFashion } = useAppwrite(() => getRecommendations("Fashion"))
   const { data: reccs, isLoading: isLoadingReccs, refetch: refetchReccs } = useAppwrite(() => getRecommendationsAll())
 
-  useEffect(() => {
-    console.log("Users data:", users);
-    console.log("DEI Users:", DEIUsers);
-    console.log("Hiking Users:", HikingUsers);
-    console.log("Real Estate Users:", REUsers);
-    console.log("Fashion Users:", FashionUsers);
-    console.log("Recommendations:", reccs);
-  }, [users, DEIUsers, HikingUsers, REUsers, FashionUsers, reccs]);
+  // useEffect(() => {
+  //   console.log("Users data:", users);
+  //   console.log("DEI Users:", DEIUsers);
+  //   console.log("Hiking Users:", HikingUsers);
+  //   console.log("Real Estate Users:", REUsers);
+  //   console.log("Fashion Users:", FashionUsers);
+  //   console.log("Recommendations:", reccs);
+  // }, [users, DEIUsers, HikingUsers, REUsers, FashionUsers, reccs]);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
