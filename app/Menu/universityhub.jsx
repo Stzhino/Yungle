@@ -337,7 +337,7 @@ const universityhub = () => {
               onPress={() => {}}
             />
             <FeatureCard
-              icon={require('../../assets/icons/group.png')}
+              icon={require('../../assets/icons/chat-processing-outline.png')}
               title="University Group Chat"
               description="Join the conversation with your peers"
               onPress={() => {}}

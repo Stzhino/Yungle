@@ -21,21 +21,22 @@ const CategoryButton = ({ icon, label, isActive, onPress }) => {
   return (
     <TouchableOpacity 
       onPress={onPress}
-      className="relative"
+      className="items-center"
+      style={{ width: '18%' }}
     >
       <Animated.View 
         style={{ transform: [{ scale: scaleAnim }] }}
-        className={`p-3 rounded-2xl items-center justify-center ${isActive ? "bg-primary/20" : "bg-gray-50"}`}
+        className="items-center"
       >
-        <View className={`rounded-full p-2 ${isActive ? "bg-primary/20" : "bg-gray-100"}`}>
+        <View className={`rounded-xl p-3 items-center justify-center ${isActive ? "bg-primary/20" : "bg-gray-50"}`}>
           <Image 
             source={icon} 
-            className="w-6 h-6" 
+            className="w-7 h-7" 
             resizeMode='contain'
             style={{ tintColor: isActive ? '#9902d3' : '#666' }}
           />
         </View>
-        <Text className={`text-sm mt-2 font-psemibold ${isActive ? "text-primary" : "text-gray-600"}`}>
+        <Text className={`text-xs mt-2 font-psemibold text-center ${isActive ? "text-primary" : "text-gray-600"}`} numberOfLines={1}>
           {label}
         </Text>
       </Animated.View>
@@ -148,76 +149,77 @@ const Suggestion = () => {
             </View>
 
             <ScrollView 
-              horizontal 
+              horizontal={false}
               showsHorizontalScrollIndicator={false} 
-              className="px-4"
-              contentContainerStyle={{ gap: 12 }}
+              className="w-full"
             >
-              <CategoryButton
-                icon={icons.foryou}
-                label="For You"
-                isActive={forYou}
-                onPress={() => {
-                  setForYou(true);
-                  setDEI(false);
-                  setHiking(false);
-                  setRealEstate(false);
-                  setFashion(false);
-                  setInfo(users || []);
-                }}
-              />
-              <CategoryButton
-                icon={icons.dei}
-                label="DEI"
-                isActive={DEI}
-                onPress={() => {
-                  setForYou(false);
-                  setDEI(true);
-                  setHiking(false);
-                  setRealEstate(false);
-                  setFashion(false);
-                  setInfo(DEIUsers || []);
-                }}
-              />
-              <CategoryButton
-                icon={icons.hiking}
-                label="Hiking"
-                isActive={hiking}
-                onPress={() => {
-                  setForYou(false);
-                  setDEI(false);
-                  setHiking(true);
-                  setRealEstate(false);
-                  setFashion(false);
-                  setInfo(HikingUsers || []);
-                }}
-              />
-              <CategoryButton
-                icon={icons.realestate}
-                label="Real Estate"
-                isActive={realEstate}
-                onPress={() => {
-                  setForYou(false);
-                  setDEI(false);
-                  setHiking(false);
-                  setRealEstate(true);
-                  setFashion(false);
-                  setInfo(REUsers || []);
-                }}
-              />
-              <CategoryButton
-                icon={icons.fashion}
-                label="Fashion"
-                isActive={fashion}
-                onPress={() => {
-                  setForYou(false);
-                  setDEI(false);
-                  setHiking(false);
-                  setRealEstate(false);
-                  setFashion(true);
-                  setInfo(FashionUsers || []);
-                }}
-              />
+              <View className="flex-row justify-between px-4">
+                <CategoryButton
+                  icon={icons.foryou}
+                  label="For You"
+                  isActive={forYou}
+                  onPress={() => {
+                    setForYou(true);
+                    setDEI(false);
+                    setHiking(false);
+                    setRealEstate(false);
+                    setFashion(false);
+                    setInfo(users || []);
+                  }}
+                />
+                <CategoryButton
+                  icon={icons.dei}
+                  label="DEI"
+                  isActive={DEI}
+                  onPress={() => {
+                    setForYou(false);
+                    setDEI(true);
+                    setHiking(false);
+                    setRealEstate(false);
+                    setFashion(false);
+                    setInfo(DEIUsers || []);
+                  }}
+                />
+                <CategoryButton
+                  icon={icons.hiking}
+                  label="Hiking"
+                  isActive={hiking}
+                  onPress={() => {
+                    setForYou(false);
+                    setDEI(false);
+                    setHiking(true);
+                    setRealEstate(false);
+                    setFashion(false);
+                    setInfo(HikingUsers || []);
+                  }}
+                />
+                <CategoryButton
+                  icon={icons.realestate}
+                  label="Real Estate"
+                  isActive={realEstate}
+                  onPress={() => {
+                    setForYou(false);
+                    setDEI(false);
+                    setHiking(false);
+                    setRealEstate(true);
+                    setFashion(false);
+                    setInfo(REUsers || []);
+                  }}
+                />
+                <CategoryButton
+                  icon={icons.fashion}
+                  label="Fashion"
+                  isActive={fashion}
+                  onPress={() => {
+                    setForYou(false);
+                    setDEI(false);
+                    setHiking(false);
+                    setRealEstate(false);
+                    setFashion(true);
+                    setInfo(FashionUsers || []);
+                  }}
+                />
+              </View>
             </ScrollView>
 
             <View className="mt-8 px-4 flex-row items-center justify-between">

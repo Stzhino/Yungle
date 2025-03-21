@@ -1,4 +1,4 @@
-import { View, Text, SafeAreaView, ScrollView, Image, Alert, Animated, Dimensions } from 'react-native'
+import { View, Text, SafeAreaView, ScrollView, Image, Alert, Animated, Dimensions, KeyboardAvoidingView, Platform } from 'react-native'
 import React, { useState, useEffect, useRef } from 'react'
 import { router } from 'expo-router'
 import images from '../../constants/images'
@@ -90,7 +90,7 @@ const SignIn = () => {
                 />
               </Animated.View>
               <Text className="text-3xl text-white font-psemibold mt-8 mb-2">
-                Welcome Back
+                Welcome back
               </Text>
               <Text className="text-gray-400 text-base font-pregular">
                 Log in to continue your journey

@@ -7,7 +7,7 @@ import {useGlobalContext} from '../../context/GlobalProvider'
 import images from '../../constants/images'
 import { useState } from 'react'
 import icons from "../../constants/icons"
-import { updateUser,getCurrentUser, createLabel, getUserPhotos,createImagePost } from '../../lib/appwrite'
+import { updateUser, getCurrentUser, createLabel, getUserPhotos, createImagePost, fetchFriends } from '../../lib/appwrite'
 import useAppwrite from '../../lib/useAppwrite'
 
 const Profile = () => {
