@@ -13,6 +13,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
 import * as MediaLibrary from 'expo-media-library';
 import { Audio } from 'expo-av';
+import {client,appwriteConfig} from "../../lib/appwrite";
 
 const MessageScreen = () => {
   const navigation = useNavigation();
@@ -33,6 +34,24 @@ const MessageScreen = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingPermission, setRecordingPermission] = useState(false);
 
+  const path=`databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.messageId}.documents`;
+    useEffect(()=>{
+      const subscribeSession= client.subscribe(path,(response)=>{
+       const eventType=response.events[0];
+       console.log("realtime work");
+        if(eventType.includes("create")) {
+          // Log when a new file is uploaded
+          console.log("create");
+          refetch();
+        }
+        if(eventType.includes("update"))
+        {
+          console.log("update");
+          refetch();
+        }
+      })
+      return subscribeSession
+    },[])
   useEffect(() => {
     if (!SessionID) {
       console.error("SessionID is missing");

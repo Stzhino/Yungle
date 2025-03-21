@@ -9,6 +9,7 @@ import {useGlobalContext} from '../../context/GlobalProvider'
 import useAppwrite from '../../lib/useAppwrite'
 import { getNotification } from '../../lib/appwrite';
 import { createNotification } from '../../lib/appwrite';
+import {client,appwriteConfig} from "../../lib/appwrite";
 const searchFunct = (search, notifArr) => {
   if (search !== '') {
     return notifArr.filter(
@@ -41,7 +42,24 @@ export default function Notification() {
   {
       refetch()
   },[]));
-  
+  const path=`databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.notificationId}.documents`;
+    useEffect(()=>{
+      const subscribeSession= client.subscribe(path,(response)=>{
+       const eventType=response.events[0];
+       console.log("realtime work");
+        if(eventType.includes("create")) {
+          // Log when a new file is uploaded
+          console.log("create");
+          refetch();
+        }
+        if(eventType.includes("update"))
+        {
+          console.log("update");
+          refetch();
+        }
+      })
+      return subscribeSession
+    },[])
   useEffect(() => {
     StatusBar.setBarStyle('dark-content');
   }, []);
