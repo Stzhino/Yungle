@@ -3,12 +3,11 @@ import { useLocalSearchParams } from "expo-router";
 import useAppwrite from "../../lib/useAppwrite";
 import { getMessages, createMessage } from "../../lib/appwrite";
 import icons from "../../constants/icons"
-import { View, Text, ActivityIndicator, FlatList, TextInput, TouchableOpacity, Image, Animated, Platform } from "react-native";
+import { View, Text, ActivityIndicator, FlatList, TextInput, TouchableOpacity, Image, Animated, Platform, KeyboardAvoidingView, Keyboard } from "react-native";
 import { useState, useEffect, useRef } from "react";
 import { useNavigation } from "@react-navigation/native";
 import Constants from "expo-constants";
 import { LinearGradient } from 'expo-linear-gradient';
-import { KeyboardAvoidingView } from "react-native";
 import MessageBubble from "../../components/MessageBubble";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
@@ -51,11 +50,6 @@ const MessageScreen = () => {
     if (messages && messages.length > 0) {
       setChatMessages(messages);
       setIsLoading(false);
-      const keyboardShowListener=Keyboard.addListener(
-        'keyboardDidShow',
-      () => {
-        scrollToBottom();
-        })
       scrollToBottom();
     } else if (!isFetching) {
       setIsLoading(false);
@@ -288,33 +282,39 @@ const MessageScreen = () => {
   const inputRef = useRef(null);
 
   return (
-    <View className="flex-1 bg-white">
-      {/* Header */}
-      <Animated.View 
-        style={{
-          paddingTop: Constants.statusBarHeight + 8,
-          transform: [{ scale: headerScale }],
-          opacity: fadeAnim
-        }}
-        className="bg-white border-b border-gray-200"
-      >
-        <View className="flex-row items-center px-4 py-2">
-          <TouchableOpacity 
-            onPress={() => navigation.goBack()}
-            className="mr-4"
-          >
-            <Image 
-              source={require('../../assets/icons/leftArrow.png')}
-              className="w-6 h-6" 
-              resizeMode='contain'
-              style={{ tintColor: '#9902d3' }}
-            />
-          </TouchableOpacity>
-          {recipientName && (
-            <Text className="text-lg font-semibold text-gray-900">{recipientName}</Text>
-          )}
-        </View>
-      </Animated.View>
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      className="flex-1"
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+      style={{ flex: 1 }}
+    >
+      <View className="flex-1 bg-white">
+        {/* Header */}
+        <Animated.View 
+          style={{
+            paddingTop: Constants.statusBarHeight + 8,
+            transform: [{ scale: headerScale }],
+            opacity: fadeAnim
+          }}
+          className="bg-white border-b border-gray-200"
+        >
+          <View className="flex-row items-center px-4 py-2">
+            <TouchableOpacity 
+              onPress={() => navigation.goBack()}
+              className="mr-4"
+            >
+              <Image 
+                source={require('../../assets/icons/leftArrow.png')}
+                className="w-6 h-6" 
+                resizeMode='contain'
+                style={{ tintColor: '#9902d3' }}
+              />
+            </TouchableOpacity>
+            {recipientName && (
+              <Text className="text-lg font-semibold text-gray-900">{recipientName}</Text>
+            )}
+          </View>
+        </Animated.View>
 
         {isLoading ? (
           <View className="flex-1 justify-center items-center">
@@ -439,7 +439,7 @@ const MessageScreen = () => {
           </View>
         </View>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 
